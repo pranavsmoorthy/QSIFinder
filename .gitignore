@@ -24,3 +24,20 @@ wheels/
 .cache/
 .pytest_cache/
 htmlcov/
+
+# IDE-specific files
+.idea/
+.vscode/
+
+# Editor swap files
+*.swp
+
+# MyPy cache
+.mypy_cache/
+
+# Pip-related
+pip-wheel-metadata/
+pip-log.txt
+
+# Jupyter/IPython notebooks
+.ipynb_checkpoints

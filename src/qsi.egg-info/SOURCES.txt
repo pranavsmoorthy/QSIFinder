@@ -1,9 +1,0 @@
-pyproject.toml
-src/data/__init__.py
-src/data/mp/__init__.py
-src/data/mp/mpRetriever.py
-src/qsi.egg-info/PKG-INFO
-src/qsi.egg-info/SOURCES.txt
-src/qsi.egg-info/dependency_links.txt
-src/qsi.egg-info/top_level.txt
-tests/test_mp.py

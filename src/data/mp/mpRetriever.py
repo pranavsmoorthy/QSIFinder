@@ -35,7 +35,6 @@ def retrieveMPData(formula):
                     "formationEnergy": d.formation_energy_per_atom,
                     "thickness": d.structure.lattice.c,
                     "symmetry": d.symmetry.number,
-                    "prototype": "Not implemented",
                     "dataFound": True
                 })
         else:

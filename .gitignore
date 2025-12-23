@@ -1,2 +1,26 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Sensitive Data
 .env
-.venv
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+lib/
+wheels/
+
+# Logs and cache
+*.log
+.cache/
+.pytest_cache/
+htmlcov/

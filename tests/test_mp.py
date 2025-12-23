@@ -5,7 +5,7 @@ class TestImports(unittest.TestCase):
         import data.mp as mp
         import json
 
-        print(json.dumps(mp.retrieveMPData("H2O"), indent=4))
+        print(json.dumps(mp.retrieveMPData("A25C384"), indent=4))
 
 if __name__ == '__main__':
     unittest.main()

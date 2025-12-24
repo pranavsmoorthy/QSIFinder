@@ -1,7 +1,9 @@
 import os
 from mp_api.client import MPRester
 from dotenv import load_dotenv
-from utils.debug import log_debug, set_debug_mode
+from utils.debug import log_debug, set_debug_mode, log_error
+
+import traceback;
 
 load_dotenv()
 MP_KEY = os.getenv("MP_KEY")
@@ -51,8 +53,8 @@ def retrieveMPData(formula):
             log_debug(f"Found these many results from MP: {len(data) if data[0].get("dataFound") else "None"}")
 
             return data
-    except:
-        log_debug("Error occurred, most likely trying to parse the formula")
+    except Exception:
+        log_error()
 
         return [{
             "message": "Error occurred, most likely trying to parse the formula",

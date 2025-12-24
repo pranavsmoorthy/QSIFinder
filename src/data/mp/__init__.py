@@ -1,2 +1,5 @@
 from .mpRetriever import retrieveMPData
-print("Materials Project retriever imported successfully")
+from .mpCleaner import filter
+
+from utils.debug import log_debug
+log_debug("Successfully imported MP data module")

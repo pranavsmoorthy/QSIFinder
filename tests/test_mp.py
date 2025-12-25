@@ -11,7 +11,7 @@ class TestMP(unittest.TestCase):
         import data.mp as mp
         import json
 
-        data = mp.retrieveMPData("KMgAlWS6:)")
+        data = mp.retrieveMPData("KMgAlWS6")
         filteredData = mp.filter(data)
 
         print(json.dumps(filteredData, indent=4))

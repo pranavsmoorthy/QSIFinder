@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from mp_api.client import MPRester
 
 from utils.debug import log_debug
+from data.matDataObj import matDataObj
 
 load_dotenv()
 MP_KEY = os.getenv("MP_KEY")
@@ -56,6 +57,15 @@ def filter(data):
                 finalizedCandidates.append(group[0])
 
             finalizedSorted = sorted(finalizedCandidates, key=lambda x: (x[0]['bandGap'], -x[0]['symmetry']))
-            return finalizedSorted[0]
+            final = finalizedSorted[0]
+
+            return matDataObj(
+                formula=final[0].get("formula"), 
+                bandGap=final[0].get("bandGap"), 
+                hullDistance=final[0].get("hullDistance"), 
+                formationEnergy=final[0].get("formationEnergy"), 
+                thickness=final[0].get("thickness"), 
+                symmetry=final[0].get("symmetry")
+            )
     else:
         return data[0]

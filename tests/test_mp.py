@@ -9,12 +9,12 @@ class TestMP(unittest.TestCase):
 
     def test_mp_cleaning(self):
         import data.mp as mp
-        import json
+        from utils.debug import log_debug
 
-        data = mp.retrieveMPData("KMgAlWS6")
+        data = mp.retrieveMPData("C")
         filteredData = mp.filter(data)
 
-        print(json.dumps(filteredData, indent=4))
+        log_debug(str(filteredData))
 
 if __name__ == '__main__':
     unittest.main()

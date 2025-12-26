@@ -59,12 +59,14 @@ def filter(data):
             finalizedSorted = sorted(finalizedCandidates, key=lambda x: (x[0]['bandGap'], -x[0]['symmetry']))
             final = finalizedSorted[0]
 
+            log_debug("Finalized MP candidate")
+
             return matDataObj(
                 formula=final[0].get("formula"), 
                 bandGap=final[0].get("bandGap"), 
                 hullDistance=final[0].get("hullDistance"), 
                 formationEnergy=final[0].get("formationEnergy"), 
-                thickness=final[0].get("thickness"), 
+                thickness=final[0].get("thickness")/10, 
                 symmetry=final[0].get("symmetry")
             )
     else:

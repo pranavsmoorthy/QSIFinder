@@ -11,12 +11,11 @@ class TestOQMD(unittest.TestCase):
     def test_oqmd_cleaning(self):
         import data.oqmd as oqmd
         from utils.debug import log_debug
-        import json
 
-        data = oqmd.retrieveOQMDData("KMgAlWS6")
+        data = oqmd.retrieveOQMDData("C")
         filteredData = oqmd.filter(data)
 
-        log_debug(str(json.dumps(filteredData, indent=4)))
+        log_debug(str(filteredData))
 
 if __name__ == '__main__':
     unittest.main()

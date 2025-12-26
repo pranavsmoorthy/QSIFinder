@@ -3,7 +3,9 @@ from pymatgen.core import Structure
 from pymatgen.symmetry.groups import SpaceGroup
 
 import gemmi
+import numpy as np
 
+from data.matDataObj import matDataObj
 from utils.debug import log_debug
 
 def filter(data):
@@ -41,24 +43,37 @@ def filter(data):
             for entry in group:
                 correspondingDataPoint = [d for d in data if d.get("oqmdId") == entry.label]
 
-                sg = gemmi.find_spacegroup_by_name(correspondingDataPoint[0].get("symmetry"))
-                correspondingDataPoint[0]["symmetry"] = sg.number
+                if not type(correspondingDataPoint[0].get("symmetry")) is int:
+                    sg = gemmi.find_spacegroup_by_name(correspondingDataPoint[0].get("symmetry"))
+                    correspondingDataPoint[0]["symmetry"] = sg.number
 
                 subgroup.append(correspondingDataPoint)
             
-            log_debug(str(subgroup))
-
             sortedSubgroup = sorted(subgroup, key=lambda x: (x[0]['bandGap'], -x[0]['symmetry']))
             sortedGroups.append(sortedSubgroup)
 
-            finalizedCandidates = []
+        finalizedCandidates = []
 
-            log_debug("Finalizing candidates...")
-            for group in sortedGroups:
-                finalizedCandidates.append(group[0])
+        log_debug("Finalizing candidates...")
+        for group in sortedGroups:
+            finalizedCandidates.append(group[0])
 
-            finalizedSorted = sorted(finalizedCandidates, key=lambda x: (x[0]['bandGap'], -x[0]['symmetry']))
-        
-        return finalizedSorted
+        finalizedSorted = sorted(finalizedCandidates, key=lambda x: (x[0]['bandGap'], -x[0]['symmetry']))
+        final = finalizedSorted[0]
+
+        log_debug("Determining final candidate's thickness")
+        cVector = final[0].get("unitCell")[2]
+        cParameter = np.linalg.norm(cVector)
+
+        log_debug("Finalized OQMD candidate")
+
+        return matDataObj(
+            formula=final[0].get("formula"), 
+            bandGap=final[0].get("bandGap"), 
+            hullDistance=final[0].get("hullDistance"), 
+            formationEnergy=final[0].get("formationEnergy"), 
+            thickness=cParameter/10, 
+            symmetry=final[0].get("symmetry")
+        )
     else:
         return data[0]

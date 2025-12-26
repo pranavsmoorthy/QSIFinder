@@ -11,6 +11,9 @@ def retrieveOQMDData(formula):
             }
 
             dataFromOQMD = oqmdr.get_oqmd_phases(verbose=False, **kwargs)
+            log_debug("Retrieved data from OQMD. Putting into dictionary...")
+            log_debug(f"Found these many results from OQMD: {len(dataFromOQMD.get("data")) if len(dataFromOQMD.get("data")) != 0 else "None"}")
+
 
             data = []
 
@@ -45,7 +48,6 @@ def retrieveOQMDData(formula):
                     "dataFound": False
                 })
 
-            log_debug(f"Found these many results from MP: {len(data) if data[0].get("dataFound") else "None"}")
             return data
     except Exception:
         log_error()

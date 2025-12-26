@@ -1,7 +1,13 @@
 from termcolor import colored
 import traceback
+import os
 _debug_mode = True
 
+if os.name == 'nt':
+    _ = os.system('cls')
+else:
+    _ = os.system('clear')
+    
 def set_debug_mode(status: bool):
     global _debug_mode
     _debug_mode = status

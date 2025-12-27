@@ -1,12 +1,12 @@
 import unittest
 
+formula = "FeS2"
+
 class TestFull(unittest.TestCase):
     def test_full_comparison(self):
         import data.mp as mp
         import data.oqmd as oqmd
         from utils.debug import log_debug
-
-        formula = "C"
 
         dataMP = mp.retrieveMPData(formula)
         filteredDataMP = mp.filter(dataMP)
@@ -21,8 +21,6 @@ class TestFull(unittest.TestCase):
         import data.mp as mp
         import data.oqmd as oqmd
         from utils.debug import log_debug
-
-        formula = "CO923423843"
 
         dataMP = mp.retrieveMPData(formula)
         finalCandidate = None

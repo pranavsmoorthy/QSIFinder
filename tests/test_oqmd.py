@@ -1,5 +1,7 @@
 import unittest
 
+formula = "FeS2"
+
 class TestOQMD(unittest.TestCase):
     def test_oqmd_retrieval(self):
         import data.oqmd as oqmd

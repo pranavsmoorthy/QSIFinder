@@ -12,7 +12,7 @@ class TestOQMD(unittest.TestCase):
         import data.oqmd as oqmd
         from utils.debug import log_debug
 
-        data = oqmd.retrieveOQMDData("C")
+        data = oqmd.retrieveOQMDData("CO49384590854")
         filteredData = oqmd.filter(data)
 
         log_debug(str(filteredData))

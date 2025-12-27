@@ -7,6 +7,17 @@ class matDataObj:
         self.thickness = thickness
         self.symmetry = symmetry
 
+    @classmethod
+    def materialNotFound(cls):
+        return cls(
+            formula=None,
+            bandGap=None,
+            hullDistance=None,
+            formationEnergy=None,
+            thickness=None,
+            symmetry=None
+        )
+
     def __str__(self):
         return f"""matDataObj(    
         \033[1mformula=\033[0m {self.formula}    

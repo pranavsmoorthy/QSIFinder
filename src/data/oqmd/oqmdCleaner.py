@@ -76,4 +76,4 @@ def filter(data):
             symmetry=final[0].get("symmetry")
         )
     else:
-        return data[0]
+        return matDataObj.materialNotFound()

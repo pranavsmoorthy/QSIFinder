@@ -43,3 +43,6 @@ pip-log.txt
 .ipynb_checkpoints
 
 reference
+GEMINI.md 
+ipf.pdf
+.DS_Store

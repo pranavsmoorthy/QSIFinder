@@ -1,6 +1,6 @@
 import unittest
 
-formula = "FeS2"
+formula = "Si"
 
 class TestMP(unittest.TestCase):
     def test_mp_retrieval(self):

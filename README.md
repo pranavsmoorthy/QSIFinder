@@ -33,34 +33,72 @@ The project will employ a computational and theoretical approach, relying on ope
 
 This model will calculate the QSI, which will then be validated against existing experimental data for known materials to ensure accuracy.
 
-### Measured Properties
+### Measured Properties and Scoring
 
-The QSI is calculated by evaluating four main properties of a material. The raw data for these properties will be collected and used to develop the algorithm.
+The QSI is calculated by evaluating five main properties of a material. Each property is assigned a subscore based on a custom formula, which is then used to calculate the final QSI.
 
-1.  **Electronic Performance**
-    -   **Metric:** Band Gap
-    -   **Description:** A larger band gap leads to less current leakage.
+1.  **Electronic Performance (Band Gap)**
+    -   **Description:** A larger band gap leads to less current leakage. An ideal band gap is around 1.5eV for creating effective quantum dots.
     -   **Ideal Value:** ~1.5eV
+    -   **Formula:** A Gaussian function is used to score materials, favoring those with a band gap close to the ideal value.
+        ```math
+        \text{score} = e^{-\frac{(\text{bandGap} - \text{idealGap})^2}{2 \cdot \text{tolerance}^2}}
+        ```
+    -   **Default Parameters:** `idealGap = 1.5`, `tolerance = 0.5`
 
-2.  **Manufacturing Feasibility**
-    -   **Metrics:**
-        -   Hull Distance / Stability
-        -   Formation Energy
-    -   **Description:** These metrics measure the material's stability.
-        -   *Hull Distance* indicates if the material is the most thermodynamically stable version of itself.
-        -   *Formation Energy* indicates if the compound is more stable than its constituent elements.
-    -   **Ideal Values:**
-        -   Hull Distance / Stability: 0
-        -   Formation Energy: Negative value
+2.  **Stability (Hull Distance)**
+    -   **Description:** This metric indicates the thermodynamic stability of a material. A lower hull distance is better.
+    -   **Ideal Value:** 0 eV/atom
+    -   **Formula:** An exponential decay function is used, where a stability of 0 yields a score of 1.
+        ```math
+        \text{score} = e^{-\frac{\text{stability}}{\text{decayConstant}}}
+        ```
+    -   **Default Parameters:** `decayConstant = 0.05`
 
-3.  **Miniaturization Limits**
-    -   **Metric:** Unit Cell Dimensions
-    -   **Description:** This represents the smallest repeating volume of the material's crystal structure, indicating how small the material can be made.
-    -   **Ideal Value:** 0.6 to 0.7 nanometers thick (the minimum for semiconducting behavior).
+3.  **Formation Energy**
+    -   **Description:** This metric indicates if a compound is more stable than its constituent elements. More negative values imply higher chemical stability.
+    -   **Ideal Value:** Negative
+    -   **Formula:** A sigmoid function favors negative values.
+        ```math
+        \text{score} = \frac{1}{1 + e^{\text{steepness} \cdot (\text{formationEnergy} - \text{cutoff})}}
+        ```
+    -   **Default Parameters:** `cutoff = 0`, `steepness = 2`
 
-4.  **Structural Uniformity**
-    -   **Metric:** Space Group
-    -   **Description:** This represents the degree of symmetry in the material's crystals. Higher symmetry helps preserve information longer in a quantum computer. There are 230 space groups, with the 230th being the most symmetrical.
+4.  **Miniaturization Limits (Thickness)**
+    -   **Description:** This represents the smallest repeating volume of the material's crystal structure, indicating how small the material can be made. Thinner materials are preferred.
+    -   **Ideal Value:** ~0.3 nm (thickness of one atom)
+    -   **Formula:** An inverse power function is used, where the score is higher for thicknesses closer to a single atom.
+        ```math
+        \text{score} = \frac{1}{1 + \text{sensitivity} \cdot (\text{thickness} - \text{minThickness})^2}
+        ```
+    -   **Default Parameters:** `minThickness = 0.3`, `sensitivity = 0.5`
+
+5.  **Structural Uniformity (Symmetry)**
+    -   **Description:** This represents the degree of symmetry in the material's crystals. Higher symmetry (a higher space group number) is better for preserving quantum information. There are 230 space groups.
+    -   **Ideal Value:** 230
+    -   **Formula:** A power function with diminishing returns for higher symmetry.
+        ```math
+        \text{score} = \left(\frac{\text{symmetry}}{230}\right)^{\text{curvature}}
+        ```
+    -   **Default Parameters:** `curvature = 0.5`
+
+### Quantum Suitability Index (QSI) Calculation
+
+The individual subscores are combined into a single Quantum Suitability Index (QSI) using a weighted geometric mean. This allows for a balanced assessment where each property contributes to the final score based on its assigned importance.
+
+**Formula:**
+```math
+\text{QSI} = \text{score}_{\text{bg}}^{w_{\text{bg}}} \cdot \text{score}_{\text{st}}^{w_{\text{st}}} \cdot \text{score}_{\text{fe}}^{w_{\text{fe}}} \cdot \text{score}_{\text{th}}^{w_{\text{th}}} \cdot \text{score}_{\text{sy}}^{w_{\text{sy}}}
+```
+
+**Default Weights:**
+The default weights for each property are as follows:
+-   `stability`: 0.35
+-   `bandGap`: 0.3
+-   `formationEnergy`: 0.15
+-   `thickness`: 0.1
+-   `symmetry`: 0.1
+
 
 ### Data Sources
 

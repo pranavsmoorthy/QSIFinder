@@ -49,7 +49,7 @@ def filter(data):
 
                 subgroup.append(correspondingDataPoint)
             
-            sortedSubgroup = sorted(subgroup, key=lambda x: (x[0]['bandGap'], -x[0]['symmetry']))
+            sortedSubgroup = sorted(subgroup, key=lambda x: (x[0]['hullDistance'], -x[0]['symmetry']))
             sortedGroups.append(sortedSubgroup)
 
         finalizedCandidates = []
@@ -58,7 +58,7 @@ def filter(data):
         for group in sortedGroups:
             finalizedCandidates.append(group[0])
 
-        finalizedSorted = sorted(finalizedCandidates, key=lambda x: (x[0]['bandGap'], -x[0]['symmetry']))
+        finalizedSorted = sorted(finalizedCandidates, key=lambda x: (x[0]['hullDistance'], -x[0]['symmetry']))
         final = finalizedSorted[0]
 
         log_debug("Determining final candidate's thickness")

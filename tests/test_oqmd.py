@@ -1,6 +1,6 @@
 import unittest
 
-formula = "FeS2"
+formula = "La2MgTiO6"
 
 class TestOQMD(unittest.TestCase):
     def test_oqmd_retrieval(self):
@@ -8,13 +8,13 @@ class TestOQMD(unittest.TestCase):
         from utils.debug import log_debug
         import json
 
-        log_debug(json.dumps(oqmd.retrieveOQMDData("KMgAlWS6"), indent=4))
+        log_debug(json.dumps(oqmd.retrieveOQMDData(formula), indent=4))
 
     def test_oqmd_cleaning(self):
         import data.oqmd as oqmd
         from utils.debug import log_debug
 
-        data = oqmd.retrieveOQMDData("CO49384590854")
+        data = oqmd.retrieveOQMDData(formula)
         filteredData = oqmd.filter(data)
 
         log_debug(str(filteredData))

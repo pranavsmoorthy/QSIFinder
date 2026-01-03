@@ -109,5 +109,5 @@ To ensure data quality and mitigate biases from any single source, data will be 
 -   **The Open Quantum Materials Database (OQMD):** This will be used as a secondary source, especially for materials not found in the Materials Project.
 
 
-### Disclaimer
+## Disclaimer
 This was all cobbled together by a high school student for an AP Research project, so in the off chance this is used for actual research purposes, keep this in mind.

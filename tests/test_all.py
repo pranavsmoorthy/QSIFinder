@@ -29,6 +29,6 @@ class TestAll(unittest.TestCase):
         log_debug("Calculating Index...")
         index = ic.getTotalIndex(finalCandidate)
         log_debug("Index Calculated: " + str(index))
-
+ 
 if __name__ == '__main__':
     unittest.main()

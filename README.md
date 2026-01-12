@@ -67,10 +67,10 @@ The QSI is calculated by evaluating five main properties of a material. Each pro
 
 4.  **Miniaturization Limits (Thickness)**
     -   **Description:** This represents the smallest repeating volume of the material's crystal structure, indicating how small the material can be made. Thinner materials are preferred.
-    -   **Ideal Value:** ~0.3 nm (thickness of one atom)
-    -   **Formula:** An inverse power function is used, where the score is higher for thicknesses closer to a single atom.
+    -   **Ideal Value:** ~0.6 nm (thickness of one atom)
+    -   **Formula:** An inverse power function is used, where the score is higher for thicknesses closer to an ideal thickness (0.6 nm).
         ```math
-        \text{score} = \frac{1}{1 + \text{sensitivity} \cdot (\text{thickness} - \text{minThickness})^2}
+        \text{score} = \frac{1}{1 + \text{sensitivity} \cdot (\text{thickness} - \text{idealThickness})^2}
         ```
     -   **Default Parameters:** `minThickness = 0.3`, `sensitivity = 0.5`
 
@@ -107,6 +107,8 @@ To ensure data quality and mitigate biases from any single source, data will be 
 
 -   **The Materials Project:** This will be the primary source due to its curated and high-quality data.
 -   **The Open Quantum Materials Database (OQMD):** This will be used as a secondary source, especially for materials not found in the Materials Project.
+
+Furthermore, the equations as well as a rudimentary version of the model can be found at this link: https://www.desmos.com/calculator/n7tveikjv6
 
 
 ## Disclaimer

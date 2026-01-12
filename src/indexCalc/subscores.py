@@ -10,7 +10,7 @@ weightsDefault = {
     "symmetry": 0.1
 }
 
-def getBandGapSubscore(bandGap, idealGap=1.5, tolerance=0.5):
+def getBandGapSubscore(bandGap, idealGap=1.0, tolerance=0.5):
     # Band gap of 1.5eV is best so that effective quantum 
     # dots can be made where information can pass 
     # through easily
@@ -44,14 +44,14 @@ def getFormationEnergySubscore(formationEnergy, cutoff=0, steepness=2):
     # positive and lesser negative values.
     return 1 / (1 + (e ** (steepness * (formationEnergy - cutoff))))
 
-def getThicknessSubscore(thickness, minThickness=0.3, sensitivity=0.5):
+def getThicknessSubscore(thickness, idealThickness=0.6, sensitivity=0.5):
     # Thinner materials are easier to turn into dots, so a
     # lesser thickness gives a better value.
     #
     # This gives an inverse power function, where the 
-    # closer the thickness is to one atom (3 angstroms),
-    # the higher the score is
-    return 1 / (1 + (sensitivity * ((thickness - minThickness) ** 2)))
+    # closer the thickness is the ideal thickness, the
+    # higher the score is
+    return 1 / (1 + (sensitivity * ((thickness - idealThickness) ** 2)))
 
 def getSymmetrySubscore(thickness, curvature=0.5):
     # High symmetry means that light is emitted equally in 

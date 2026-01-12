@@ -1,6 +1,6 @@
 import unittest
 
-formula = "Si"
+formula = "MoS2"
 
 class TestMP(unittest.TestCase):
     def test_mp_retrieval(self):
@@ -11,12 +11,13 @@ class TestMP(unittest.TestCase):
 
     def test_mp_cleaning(self):
         import data.mp as mp
+        from data.matDataObj import matDataObj
         from utils.debug import log_debug
 
         data = mp.retrieveMPData(formula)
         filteredData = mp.filter(data)
 
-        log_debug(str(filteredData))
+        print(str(filteredData))
 
 if __name__ == '__main__':
     unittest.main()

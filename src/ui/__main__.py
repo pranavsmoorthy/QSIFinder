@@ -1,14 +1,87 @@
 import sys
 import math
 import numpy as np
+import logging
+
+# Add the project root to the python path
+sys.path.insert(0, '.')
+
+from PyQt6.QtCore import pyqtSignal, QObject, QThread
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLineEdit, QPushButton, QLabel, QCheckBox, QGroupBox, QFormLayout, QDoubleSpinBox,
-    QTextEdit
+    QTextEdit, QStatusBar
 )
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
+
+# Backend imports
+from src.data.mp import mpRetriever as mp
+from src.data.oqmd import oqmdRetriever as oqmd
+from src.data.mp import mpCleaner
+from src.data.oqmd import oqmdCleaner
+from src.indexCalc import subscores as ic
+from utils.debug import log_debug
+from src.data.matDataObj import matDataObj
+
+
+class QTextEditLogger(logging.Handler, QObject):
+    append_text = pyqtSignal(str)
+    message_logged = pyqtSignal(str)
+
+    def __init__(self, parent):
+        super().__init__()
+        QObject.__init__(self)
+        self.widget = parent
+        self.append_text.connect(self.widget.append)
+        self.setFormatter(logging.Formatter('%(message)s'))
+
+    def emit(self, record):
+        msg = self.format(record)
+        self.append_text.emit(msg)
+        self.message_logged.emit(msg)
+
+class CalculationWorker(QObject):
+    finished = pyqtSignal(dict)
+
+    def __init__(self, formula, force_oqmd, weights):
+        super().__init__()
+        self.formula = formula
+        self.force_oqmd = force_oqmd
+        self.weights = weights
+
+    def run(self):
+        log_debug("Worker thread started.")
+        dataMP = mp.retrieveMPData(self.formula) if not self.force_oqmd else [{"dataFound": False}]
+        finalCandidate = None
+
+        if dataMP[0].get("dataFound") and not self.force_oqmd:
+            finalCandidate = mpCleaner.filter(dataMP)
+        else:
+            dataOQMD = oqmd.retrieveOQMDData(self.formula)
+            finalCandidate = oqmdCleaner.filter(dataOQMD)
+        
+        log_debug("Final Candidate: " + str(finalCandidate))
+
+        if finalCandidate.formula is None:
+            self.finished.emit({'error': "No valid material candidate found in MP or OQMD databases."})
+            return
+
+        log_debug("Calculating Index...")
+        
+        bg_subscore = ic.getBandGapSubscore(finalCandidate.bandGap)
+        st_subscore = ic.getStabilitySubscore(finalCandidate.hullDistance)
+        fe_subscore = ic.getFormationEnergySubscore(finalCandidate.formationEnergy)
+        th_subscore = ic.getThicknessSubscore(finalCandidate.thickness)
+        sy_subscore = ic.getSymmetrySubscore(finalCandidate.symmetry)
+        
+        sub_scores = [st_subscore, bg_subscore, fe_subscore, th_subscore, sy_subscore]
+        
+        index = ic.getTotalIndex(finalCandidate, self.weights)
+        log_debug("Index Calculated: " + str(index))
+        
+        self.finished.emit({'sub_scores': sub_scores, 'index': index, 'error': None})
 
 class RadarChart(FigureCanvas):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
@@ -20,12 +93,12 @@ class RadarChart(FigureCanvas):
     def plot(self, data, labels):
         self.axes.clear()
         angles = np.linspace(0, 2 * np.pi, len(labels), endpoint=False).tolist()
-        data += data[:1]
-        angles += angles[:1]
+        data_with_loop = data + data[:1]
+        angles_with_loop = angles + angles[:1]
 
-        self.axes.plot(angles, data, 'o-')
-        self.axes.fill(angles, data, alpha=0.25)
-        self.axes.set_thetagrids(np.degrees(angles[:-1]), labels)
+        self.axes.plot(angles_with_loop, data_with_loop, 'o-')
+        self.axes.fill(angles_with_loop, data_with_loop, alpha=0.25)
+        self.axes.set_thetagrids(np.degrees(angles), labels)
         self.axes.set_ylim(0, 1)
         self.figure.canvas.draw()
 
@@ -39,10 +112,8 @@ class DonutChart(FigureCanvas):
     def plot(self, value):
         self.axes.clear()
         
-        # Ensure the value is within the [0, 1] range
         value = max(0, min(1, value))
 
-        # Define colors
         if value < 0.33:
             color = 'red'
         elif value < 0.66:
@@ -50,21 +121,17 @@ class DonutChart(FigureCanvas):
         else:
             color = 'green'
 
-        # Data for the donut chart
         values = [value, 1 - value]
         colors = [color, 'lightgrey']
         
-        # Plotting the donut chart
         self.axes.pie(values, colors=colors, startangle=90, wedgeprops=dict(width=0.3))
 
-        # Adding a circle in the center to make it a donut
         center_circle = plt.Circle((0,0), 0.70, fc='white')
         self.axes.add_artist(center_circle)
 
-        # Adding the text in the center
         self.axes.text(0, 0, f'{value:.2f}', ha='center', va='center', fontsize=20, weight='bold')
         
-        self.axes.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+        self.axes.axis('equal')
         self.figure.canvas.draw()
 
 
@@ -74,17 +141,14 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Quantum Suitability Index (QSI) Calculator")
         self.setFixedSize(1200, 600)
 
-        # Main widget and layout
         main_widget = QWidget()
         self.setCentralWidget(main_widget)
         main_layout = QHBoxLayout(main_widget)
 
-        # Left panel for inputs
         left_panel = QWidget()
         left_layout = QVBoxLayout(left_panel)
         main_layout.addWidget(left_panel)
 
-        # Formula input
         formula_group = QGroupBox("Chemical Formula")
         formula_layout = QVBoxLayout()
         self.formula_input = QLineEdit()
@@ -93,7 +157,6 @@ class MainWindow(QMainWindow):
         formula_group.setLayout(formula_layout)
         left_layout.addWidget(formula_group)
 
-        # Weights customization
         weights_group = QGroupBox("Sub-index Weights")
         weights_layout = QFormLayout()
         
@@ -120,16 +183,13 @@ class MainWindow(QMainWindow):
         weights_group.setLayout(weights_layout)
         left_layout.addWidget(weights_group)
 
-        # OQMD option
         self.oqmd_checkbox = QCheckBox("Force OQMD Data")
         left_layout.addWidget(self.oqmd_checkbox)
 
-        # Calculate button
         self.calculate_button = QPushButton("Calculate QSI")
-        self.calculate_button.clicked.connect(self.calculate_qsi)
+        self.calculate_button.clicked.connect(self.start_calculation)
         left_layout.addWidget(self.calculate_button)
 
-        # Logs
         logs_group = QGroupBox("Logs")
         logs_layout = QVBoxLayout()
         self.logs_output = QTextEdit()
@@ -138,13 +198,10 @@ class MainWindow(QMainWindow):
         logs_group.setLayout(logs_layout)
         left_layout.addWidget(logs_group)
 
-
-        # Right panel for charts
         right_panel = QWidget()
         right_layout = QVBoxLayout(right_panel)
-        main_layout.addWidget(right_panel, 1) # Give more space to the right panel
+        main_layout.addWidget(right_panel, 1)
 
-        # Charts
         self.radar_chart = RadarChart(right_panel)
         self.donut_chart = DonutChart(right_panel)
         
@@ -153,38 +210,61 @@ class MainWindow(QMainWindow):
         charts_layout.addWidget(self.donut_chart)
         right_layout.addLayout(charts_layout)
 
-        # Initial plot
         self.radar_chart.plot([0, 0, 0, 0, 0], list(self.weights_inputs.keys()))
         self.donut_chart.plot(0)
 
+        self.setStatusBar(QStatusBar(self))
 
-    def calculate_qsi(self):
+        log_handler = QTextEditLogger(self.logs_output)
+        log_handler.message_logged.connect(self.statusBar().showMessage)
+        
+        from utils import debug
+        debug_logger = logging.getLogger('utils.debug')
+        debug_logger.addHandler(log_handler)
+        debug_logger.setLevel(logging.INFO)
+
+    def start_calculation(self):
         self.logs_output.clear()
-        self.logs_output.append("Starting QSI calculation...")
+        log_debug("Starting QSI calculation...")
+        
         formula = self.formula_input.text()
-        use_oqmd = self.oqmd_checkbox.isChecked()
-        weights = {name: spinbox.value() for name, spinbox in self.weights_inputs.items()}
-
-        # Validate weights
-        total_weight = sum(weights.values())
-        if not math.isclose(total_weight, 1.0):
-            self.logs_output.append(f"Error: Weights must sum to 1.0 (current sum: {total_weight:.2f})")
+        if not formula:
+            log_debug("Error: Please enter a chemical formula.")
             return
 
-        #
-        # TODO: Here you would call your backend functions to get the actual data
-        # based on the formula, oqmd flag, and weights.
-        #
-        
-        # For now, let's use some dummy data to show the charts
-        sub_indexes = [np.random.rand() for _ in self.weights_inputs.keys()]
-        final_index = np.random.rand()
+        force_oqmd = self.oqmd_checkbox.isChecked()
+        weights = {name: spinbox.value() for name, spinbox in self.weights_inputs.items()}
 
-        # Update charts
-        labels = list(self.weights_inputs.keys())
-        self.radar_chart.plot(sub_indexes, labels)
-        self.donut_chart.plot(final_index)
-        self.logs_output.append("QSI calculation finished.")
+        total_weight = sum(weights.values())
+        if not math.isclose(total_weight, 1.0):
+            log_debug(f"Error: Weights must sum to 1.0 (current sum: {total_weight:.2f})")
+            return
+
+        self.calculate_button.setEnabled(False)
+        self.thread = QThread()
+        self.worker = CalculationWorker(formula, force_oqmd, weights)
+        self.worker.moveToThread(self.thread)
+
+        self.thread.started.connect(self.worker.run)
+        self.worker.finished.connect(self.on_calculation_finished)
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+
+        self.thread.start()
+
+    def on_calculation_finished(self, result):
+        self.calculate_button.setEnabled(True)
+        if result['error']:
+            log_debug(result['error'])
+            self.radar_chart.plot([0, 0, 0, 0, 0], list(self.weights_inputs.keys()))
+            self.donut_chart.plot(0)
+        else:
+            labels = list(self.weights_inputs.keys())
+            self.radar_chart.plot(result['sub_scores'], labels)
+            self.donut_chart.plot(result['index'])
+        
+        log_debug("QSI calculation finished.")
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 import os
 from mp_api.client import MPRester
 from dotenv import load_dotenv
-from utils.debug import log_debug, set_debug_mode, log_error
+from utils.debug import log_debug, log_error
 
 import traceback;
 

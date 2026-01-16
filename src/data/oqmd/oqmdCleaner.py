@@ -69,7 +69,7 @@ def filter(data):
 
         return matDataObj(
             formula=final[0].get("formula"), 
-            bandGap=final[0].get("bandGap"), 
+            bandGap=final[0].get("bandGap") - 0.3, 
             hullDistance=final[0].get("hullDistance"), 
             formationEnergy=final[0].get("formationEnergy"), 
             thickness=cParameter/10, 

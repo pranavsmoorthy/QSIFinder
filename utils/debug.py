@@ -13,6 +13,7 @@ def is_debug_mode():
 
 def log_debug(message: str):
     if is_debug_mode():
+        print(f"[DEBUG] {message}")
         logger.info(message)
 
 def log_error():

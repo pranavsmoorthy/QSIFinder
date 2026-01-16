@@ -1,6 +1,6 @@
 import unittest
 
-formula = "La2MgTiO6"
+formula = "InP"
 
 class TestOQMD(unittest.TestCase):
     def test_oqmd_retrieval(self):

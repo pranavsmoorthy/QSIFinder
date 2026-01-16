@@ -6,11 +6,11 @@ import logging
 # Add the project root to the python path
 sys.path.insert(0, '.')
 
-from PyQt6.QtCore import pyqtSignal, QObject, QThread
+from PyQt6.QtCore import pyqtSignal, QObject, QThread, Qt
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLineEdit, QPushButton, QLabel, QCheckBox, QGroupBox, QFormLayout, QDoubleSpinBox,
-    QTextEdit, QStatusBar
+    QTextEdit, QStatusBar, QStackedWidget, QProgressBar
 )
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -25,6 +25,13 @@ from src.indexCalc import subscores as ic
 from utils.debug import log_debug
 from src.data.matDataObj import matDataObj
 
+PROPERTY_DISPLAY_NAMES = {
+    "stability": "Stability",
+    "bandGap": "Band Gap",
+    "formationEnergy": "Formation Energy",
+    "thickness": "Thickness",
+    "symmetry": "Symmetry"
+}
 
 class QTextEditLogger(logging.Handler, QObject):
     append_text = pyqtSignal(str)
@@ -86,50 +93,72 @@ class CalculationWorker(QObject):
 class RadarChart(FigureCanvas):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi)
+        fig.patch.set_alpha(0)
         self.axes = fig.add_subplot(111, polar=True)
+        self.axes.patch.set_alpha(0)
         super(RadarChart, self).__init__(fig)
         self.setParent(parent)
+        self.setStyleSheet("background-color:transparent;")
 
     def plot(self, data, labels):
         self.axes.clear()
+        self.axes.patch.set_alpha(0)
+        
+        # Professional Styling
+        self.axes.tick_params(axis='x', colors='white', labelsize=10)
+        self.axes.tick_params(axis='y', colors='white', labelsize=8)
+        self.axes.yaxis.grid(color='white', linestyle='dashed', alpha=0.2)
+        self.axes.xaxis.grid(color='white', linestyle='dashed', alpha=0.2)
+        self.axes.spines['polar'].set_visible(False) # Remove outer circle for cleaner look
+
         angles = np.linspace(0, 2 * np.pi, len(labels), endpoint=False).tolist()
         data_with_loop = data + data[:1]
         angles_with_loop = angles + angles[:1]
 
-        self.axes.plot(angles_with_loop, data_with_loop, 'o-')
-        self.axes.fill(angles_with_loop, data_with_loop, alpha=0.25)
+        self.axes.plot(angles_with_loop, data_with_loop, 'o-', color='#00d1b2', linewidth=2, markersize=5)
+        self.axes.fill(angles_with_loop, data_with_loop, color='#00d1b2', alpha=0.25)
         self.axes.set_thetagrids(np.degrees(angles), labels)
         self.axes.set_ylim(0, 1)
+        
+        # Ensure grid lines are drawn below the plot
+        self.axes.set_axisbelow(True)
+        
         self.figure.canvas.draw()
 
 class DonutChart(FigureCanvas):
     def __init__(self, parent=None, width=4, height=4, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi)
+        fig.patch.set_alpha(0)
         self.axes = fig.add_subplot(111)
+        self.axes.patch.set_alpha(0)
         super(DonutChart, self).__init__(fig)
         self.setParent(parent)
+        self.setStyleSheet("background-color:transparent;")
 
     def plot(self, value):
         self.axes.clear()
+        self.axes.axis('off')
         
         value = max(0, min(1, value))
 
+        # Professional Color Palette
         if value < 0.33:
-            color = 'red'
+            color = '#ff3860' # Red
         elif value < 0.66:
-            color = 'orange'
+            color = '#ffdd57' # Yellow/Orange
         else:
-            color = 'green'
+            color = '#23d160' # Green
 
         values = [value, 1 - value]
-        colors = [color, 'lightgrey']
+        colors = [color, '#2d2d2d'] # Dark grey for the remaining part
         
-        self.axes.pie(values, colors=colors, startangle=90, wedgeprops=dict(width=0.3))
+        # Use a slightly thinner ring for a modern look
+        self.axes.pie(values, colors=colors, startangle=90, wedgeprops=dict(width=0.25, edgecolor='#1e1e1e'))
 
-        center_circle = plt.Circle((0,0), 0.70, fc='white')
+        center_circle = plt.Circle((0,0), 0.75, fc='none')
         self.axes.add_artist(center_circle)
 
-        self.axes.text(0, 0, f'{value:.2f}', ha='center', va='center', fontsize=20, weight='bold')
+        self.axes.text(0, 0, f'{value:.2f}', ha='center', va='center', fontsize=24, weight='bold', color='white', fontname='Arial')
         
         self.axes.axis('equal')
         self.figure.canvas.draw()
@@ -140,6 +169,78 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Quantum Suitability Index (QSI) Calculator")
         self.setFixedSize(1200, 600)
+
+        # Apply Dark Theme
+        self.setStyleSheet("""
+            QMainWindow {
+                background-color: #1e1e1e;
+                color: #ffffff;
+            }
+            QWidget {
+                background-color: #1e1e1e;
+                color: #ffffff;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                font-size: 14px;
+            }
+            QGroupBox {
+                border: 1px solid #3e3e3e;
+                border-radius: 6px;
+                margin-top: 20px;
+                padding-top: 10px;
+                font-weight: bold;
+                color: #e0e0e0;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                subcontrol-position: top center;
+                padding: 0 10px;
+                background-color: #1e1e1e;
+            }
+            QLineEdit, QDoubleSpinBox {
+                background-color: #2d2d2d;
+                border: 1px solid #3e3e3e;
+                border-radius: 4px;
+                padding: 5px;
+                color: #ffffff;
+                selection-background-color: #007aff;
+            }
+            QPushButton {
+                background-color: #007aff;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 8px 16px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #0062cc;
+            }
+            QPushButton:pressed {
+                background-color: #0051a8;
+            }
+            QPushButton:disabled {
+                background-color: #3e3e3e;
+                color: #888888;
+            }
+            QTextEdit {
+                background-color: #2d2d2d;
+                border: 1px solid #3e3e3e;
+                border-radius: 4px;
+                color: #e0e0e0;
+                font-family: "Menlo", "Consolas", monospace;
+                font-size: 12px;
+            }
+            QStatusBar {
+                background-color: #1e1e1e;
+                color: #888888;
+            }
+            QCheckBox {
+                color: #e0e0e0;
+            }
+            QLabel {
+                color: #e0e0e0;
+            }
+        """)
 
         main_widget = QWidget()
         self.setCentralWidget(main_widget)
@@ -179,7 +280,7 @@ class MainWindow(QMainWindow):
             spinbox.setRange(0.0, 1.0)
             spinbox.setSingleStep(0.05)
             spinbox.setValue(default_weights.get(name, 0.0))
-            weights_layout.addRow(name, spinbox)
+            weights_layout.addRow(PROPERTY_DISPLAY_NAMES.get(name, name), spinbox)
         weights_group.setLayout(weights_layout)
         left_layout.addWidget(weights_group)
 
@@ -202,15 +303,50 @@ class MainWindow(QMainWindow):
         right_layout = QVBoxLayout(right_panel)
         main_layout.addWidget(right_panel, 1)
 
-        self.radar_chart = RadarChart(right_panel)
-        self.donut_chart = DonutChart(right_panel)
-        
-        charts_layout = QHBoxLayout()
+        self.stacked_widget = QStackedWidget()
+        right_layout.addWidget(self.stacked_widget)
+
+        # Charts View (Index 0)
+        self.charts_view = QWidget()
+        charts_layout = QHBoxLayout(self.charts_view)
+        self.radar_chart = RadarChart(self.charts_view)
+        self.donut_chart = DonutChart(self.charts_view)
         charts_layout.addWidget(self.radar_chart)
         charts_layout.addWidget(self.donut_chart)
-        right_layout.addLayout(charts_layout)
+        self.stacked_widget.addWidget(self.charts_view)
 
-        self.radar_chart.plot([0, 0, 0, 0, 0], list(self.weights_inputs.keys()))
+        # Loading View (Index 1)
+        self.loading_view = QWidget()
+        loading_layout = QVBoxLayout(self.loading_view)
+        
+        loading_text = QLabel("Calculating Quantum Suitability Index...")
+        loading_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        loading_text.setStyleSheet("font-size: 20px; color: #007aff; font-weight: bold; margin-bottom: 20px;")
+        
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setRange(0, 0) # Indeterminate mode
+        self.progress_bar.setFixedHeight(6)
+        self.progress_bar.setTextVisible(False)
+        self.progress_bar.setStyleSheet("""
+            QProgressBar {
+                background-color: #2d2d2d;
+                border: none;
+                border-radius: 3px;
+            }
+            QProgressBar::chunk {
+                background-color: #007aff;
+                border-radius: 3px;
+            }
+        """)
+        
+        loading_layout.addStretch()
+        loading_layout.addWidget(loading_text)
+        loading_layout.addWidget(self.progress_bar)
+        loading_layout.addStretch()
+        self.stacked_widget.addWidget(self.loading_view)
+
+        initial_labels = [PROPERTY_DISPLAY_NAMES.get(k, k) for k in self.weights_inputs.keys()]
+        self.radar_chart.plot([0, 0, 0, 0, 0], initial_labels)
         self.donut_chart.plot(0)
 
         self.setStatusBar(QStatusBar(self))
@@ -241,6 +377,7 @@ class MainWindow(QMainWindow):
             return
 
         self.calculate_button.setEnabled(False)
+        self.stacked_widget.setCurrentIndex(1) # Show loading screen
         self.thread = QThread()
         self.worker = CalculationWorker(formula, force_oqmd, weights)
         self.worker.moveToThread(self.thread)
@@ -255,12 +392,14 @@ class MainWindow(QMainWindow):
 
     def on_calculation_finished(self, result):
         self.calculate_button.setEnabled(True)
+        self.stacked_widget.setCurrentIndex(0) # Show charts
         if result['error']:
             log_debug(result['error'])
-            self.radar_chart.plot([0, 0, 0, 0, 0], list(self.weights_inputs.keys()))
+            labels = [PROPERTY_DISPLAY_NAMES.get(k, k) for k in self.weights_inputs.keys()]
+            self.radar_chart.plot([0, 0, 0, 0, 0], labels)
             self.donut_chart.plot(0)
         else:
-            labels = list(self.weights_inputs.keys())
+            labels = [PROPERTY_DISPLAY_NAMES.get(k, k) for k in self.weights_inputs.keys()]
             self.radar_chart.plot(result['sub_scores'], labels)
             self.donut_chart.plot(result['index'])
         

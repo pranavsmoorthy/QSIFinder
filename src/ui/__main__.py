@@ -2,6 +2,8 @@ import sys
 import math
 import numpy as np
 import logging
+import os
+import subprocess
 
 # Add the project root to the python path
 sys.path.insert(0, '.')
@@ -10,7 +12,7 @@ from PyQt6.QtCore import pyqtSignal, QObject, QThread, Qt
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLineEdit, QPushButton, QLabel, QCheckBox, QGroupBox, QFormLayout, QDoubleSpinBox,
-    QTextEdit, QStatusBar, QStackedWidget, QProgressBar
+    QTextEdit, QStatusBar, QStackedWidget, QProgressBar, QFileDialog
 )
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -168,7 +170,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Quantum Suitability Index (QSI) Calculator")
-        self.setFixedSize(1200, 600)
+        self.setFixedSize(1200, 700)
 
         # Apply Dark Theme
         self.setStyleSheet("""
@@ -291,6 +293,10 @@ class MainWindow(QMainWindow):
         self.calculate_button.clicked.connect(self.start_calculation)
         left_layout.addWidget(self.calculate_button)
 
+        self.bulk_calculate_button = QPushButton("Start Bulk Calculation")
+        self.bulk_calculate_button.clicked.connect(self.start_bulk_calculation)
+        left_layout.addWidget(self.bulk_calculate_button)
+
         logs_group = QGroupBox("Logs")
         logs_layout = QVBoxLayout()
         self.logs_output = QTextEdit()
@@ -404,6 +410,24 @@ class MainWindow(QMainWindow):
             self.donut_chart.plot(result['index'])
         
         log_debug("QSI calculation finished.")
+
+    def start_bulk_calculation(self):
+        log_debug("Opening file dialog for bulk test...")
+        dialog = QFileDialog(self)
+        dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
+        dialog.setNameFilter("JSON files (*.json)")
+        if dialog.exec():
+            file_path = dialog.selectedFiles()[0]
+            log_debug(f"Starting bulk test with file: {file_path}")
+            
+            # Use sys.executable to ensure we use the same python interpreter
+            # that is running the main application (respecting virtual environments)
+            python_executable = sys.executable
+            script_path = os.path.join(os.path.dirname(__file__), '..', 'bulkTest', 'bulk_tester.py')
+            
+            # Launch the bulk tester as a completely separate process
+            subprocess.Popen([python_executable, script_path, file_path])
+            log_debug("Bulk test process started.")
 
 
 if __name__ == "__main__":

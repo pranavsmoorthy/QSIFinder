@@ -47,7 +47,7 @@ def filter(data):
                     correspondingDataPoint = [d for d in data if d.get("mpId") == entry.label]
                     subgroup.append(correspondingDataPoint)
                 
-                sortedSubgroup = sorted(subgroup, key=lambda x: (x[0]['hullDistance'], -x[0]['symmetry']))
+                sortedSubgroup = sorted(subgroup, key=lambda x: (x[0]['hullDistance'], -(x[0]['bandGap'] - 1)))
                 sortedGroups.append(sortedSubgroup)
 
             finalizedCandidates = []
@@ -56,7 +56,7 @@ def filter(data):
             for group in sortedGroups:
                 finalizedCandidates.append(group[0])
 
-            finalizedSorted = sorted(finalizedCandidates, key=lambda x: (x[0]['hullDistance'], -x[0]['symmetry']))
+            finalizedSorted = sorted(finalizedCandidates, key=lambda x: (x[0]['hullDistance'], -(x[0]['bandGap'] - 1)))
             final = finalizedSorted[0]
 
             log_debug("Finalized MP candidate")

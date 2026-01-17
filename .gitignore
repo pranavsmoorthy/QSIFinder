@@ -46,3 +46,11 @@ reference
 GEMINI.md 
 ipf.pdf
 .DS_Store
+
+/bulk_test_results
+/false_positives.json
+/false_negatives.json
+/true_positives.json
+/true_negatives.json
+/inconclusive.json
+/testData.json

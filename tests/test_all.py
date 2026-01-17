@@ -1,13 +1,18 @@
 import unittest
+import sys
+import os
+
+# Add project root to path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 formula = "H2O"
 forceOQMD = False
 
 class TestAll(unittest.TestCase):
     def test(self):
-        import data.mp as mp
-        import data.oqmd as oqmd
-        import indexCalc as ic
+        import src.data.mp as mp
+        import src.data.oqmd as oqmd
+        import src.indexCalc as ic
         from utils.debug import log_debug
 
         dataMP = mp.retrieveMPData(formula) if not forceOQMD else [{"dataFound": False}]

@@ -1,11 +1,16 @@
 import unittest
+import sys
+import os
+
+# Add project root to path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 formula = "FeS2"
 
 class TestFull(unittest.TestCase):
     def test_full_comparison(self):
-        import data.mp as mp
-        import data.oqmd as oqmd
+        import src.data.mp as mp
+        import src.data.oqmd as oqmd
         from utils.debug import log_debug
 
         dataMP = mp.retrieveMPData(formula)
@@ -18,8 +23,8 @@ class TestFull(unittest.TestCase):
         log_debug("OQMD Data: " + str(filteredDataOQMD))
 
     def test_full_flow(self):
-        import data.mp as mp
-        import data.oqmd as oqmd
+        import src.data.mp as mp
+        import src.data.oqmd as oqmd
         from utils.debug import log_debug
 
         dataMP = mp.retrieveMPData(formula)

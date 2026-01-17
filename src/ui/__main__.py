@@ -26,6 +26,7 @@ from src.data.oqmd import oqmdCleaner
 from src.indexCalc import subscores as ic
 from utils.debug import log_debug
 from src.data.matDataObj import matDataObj
+from src.bulkTest.calculator import calculate_qsi
 
 PROPERTY_DISPLAY_NAMES = {
     "stability": "Stability",
@@ -62,35 +63,9 @@ class CalculationWorker(QObject):
 
     def run(self):
         log_debug("Worker thread started.")
-        dataMP = mp.retrieveMPData(self.formula) if not self.force_oqmd else [{"dataFound": False}]
-        finalCandidate = None
-
-        if dataMP[0].get("dataFound") and not self.force_oqmd:
-            finalCandidate = mpCleaner.filter(dataMP)
-        else:
-            dataOQMD = oqmd.retrieveOQMDData(self.formula)
-            finalCandidate = oqmdCleaner.filter(dataOQMD)
-        
-        log_debug("Final Candidate: " + str(finalCandidate))
-
-        if finalCandidate.formula is None:
-            self.finished.emit({'error': "No valid material candidate found in MP or OQMD databases."})
-            return
-
-        log_debug("Calculating Index...")
-        
-        bg_subscore = ic.getBandGapSubscore(finalCandidate.bandGap)
-        st_subscore = ic.getStabilitySubscore(finalCandidate.hullDistance)
-        fe_subscore = ic.getFormationEnergySubscore(finalCandidate.formationEnergy)
-        th_subscore = ic.getThicknessSubscore(finalCandidate.thickness)
-        sy_subscore = ic.getSymmetrySubscore(finalCandidate.symmetry)
-        
-        sub_scores = [st_subscore, bg_subscore, fe_subscore, th_subscore, sy_subscore]
-        
-        index = ic.getTotalIndex(finalCandidate, self.weights)
-        log_debug("Index Calculated: " + str(index))
-        
-        self.finished.emit({'sub_scores': sub_scores, 'index': index, 'error': None})
+        result = calculate_qsi(self.formula, self.force_oqmd, self.weights)
+        log_debug("Index Calculated: " + str(result.get('index')))
+        self.finished.emit(result)
 
 class RadarChart(FigureCanvas):
     def __init__(self, parent=None, width=5, height=4, dpi=100):

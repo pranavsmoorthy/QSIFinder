@@ -10,15 +10,27 @@ weightsDefault = {
     "symmetry": 0.1
 }
 
-def getBandGapSubscore(bandGap, idealGap=1.0, tolerance=0.5):
-    # Band gap of 1.5eV is best so that effective quantum 
+def getBandGapSubscore(bandGap, idealGapVisible=1.0, idealGapUV=2.5, visibleTolerance=0.5, uvTolerance=1.0, uvCutoff=2):
+    # Band gap of 1.0eV is best so that effective quantum 
     # dots can be made where information can pass 
     # through easily
     #
-    # This creates a bell curve centered at 1.5eV and
-    # tolerance of 0.5, meaning that a material within 1 to
-    # 2 eV band gap will be suitable. (Using default 
+    # This creates a bell curve centered at 1.0eV and
+    # tolerance of 0.5, meaning that a material within 0.5 to
+    # 1.5 eV band gap will be suitable. (Using default 
     # values)
+    # 
+    # If the material is determined to be a UV emitter
+    # where the bandgap is greater than the cutoff, then the 
+    # center and tolerance is shifted
+
+    idealGap = idealGapVisible
+    tolerance = visibleTolerance
+
+    if bandGap > uvCutoff:
+        idealGap = idealGapUV
+        tolerance = uvTolerance
+
     return e ** (-1 * ((bandGap - idealGap) ** 2) / (2 * (tolerance ** 2)))
 
 def getStabilitySubscore(stability, decayConstant=0.05):
@@ -86,6 +98,8 @@ def getTotalIndex(data:matDataObj, weights:dict=weightsDefault):
     log_debug(f"Thickness Subscore: {thSubscore} (Weight: {thWeight})")
     log_debug(f"Symmetry Subscore: {sySubscore} (Weight: {syWeight})")
 
+    sub_scores = [stSubscore, bgSubscore, feSubscore, thSubscore, sySubscore]
+
     indexInfo = [
         [bgSubscore, bgWeight],
         [stSubscore, stWeight],
@@ -99,4 +113,4 @@ def getTotalIndex(data:matDataObj, weights:dict=weightsDefault):
     for i in indexInfo:
         index *= (i[0] ** i[1])
 
-    return index
+    return {'index': index, 'sub_scores': sub_scores}

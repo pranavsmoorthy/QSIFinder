@@ -7,6 +7,7 @@
   - [Core Approach](#core-approach)
   - [Measured Properties](#measured-properties)
   - [Data Sources](#data-sources)
+- [Model Validation and Bulk Testing](#model-validation-and-bulk-testing)
 - [DISCLAIMER!!](#disclaimer)
 
 ## The Problem
@@ -39,13 +40,15 @@ This model will calculate the QSI, which will then be validated against existing
 The QSI is calculated by evaluating five main properties of a material. Each property is assigned a subscore based on a custom formula, which is then used to calculate the final QSI.
 
 1.  **Electronic Performance (Band Gap)**
-    -   **Description:** A larger band gap leads to less current leakage. An ideal band gap is around 1.5eV for creating effective quantum dots.
-    -   **Ideal Value:** ~1.5eV
-    -   **Formula:** A Gaussian function is used to score materials, favoring those with a band gap close to the ideal value.
+    -   **Description:** A larger band gap leads to less current leakage. The model now differentiates between materials based on their potential application in visible or UV light spectrums. For typical applications, an ideal band gap is around 1.0eV. For materials suited as UV emitters (band gap > 2.0eV), an ideal gap of 2.5eV is targeted.
+    -   **Ideal Value:** ~1.0eV (Visible) or ~2.5eV (UV)
+    -   **Formula:** A Gaussian function is used to score materials, favoring those with a band gap close to the relevant ideal value.
         ```math
         \text{score} = e^{-\frac{(\text{bandGap} - \text{idealGap})^2}{2 \cdot \text{tolerance}^2}}
         ```
-    -   **Default Parameters:** `idealGap = 1.5`, `tolerance = 0.5`
+    -   **Default Parameters:** 
+        -   For visible range: `idealGap = 1.0`, `tolerance = 0.5`
+        -   For UV range (`bandGap > 2.0eV`): `idealGap = 2.5`, `tolerance = 1.0`
 
 2.  **Stability (Hull Distance)**
     -   **Description:** This metric indicates the thermodynamic stability of a material. A lower hull distance is better.
@@ -109,6 +112,36 @@ To ensure data quality and mitigate biases from any single source, data will be 
 -   **The Open Quantum Materials Database (OQMD):** This will be used as a secondary source, especially for materials not found in the Materials Project.
 
 Furthermore, the equations as well as a rudimentary version of the model can be found at this link: https://www.desmos.com/calculator/n7tveikjv6
+
+## Model Validation and Bulk Testing
+
+To assess the accuracy and performance of the QSI model, a bulk testing feature is included. This utility processes a list of known materials and compares the model's predictions against their true suitability, presenting the results in a confusion matrix.
+
+### Running the Bulk Tester
+
+This command will open a file dialog, prompting you to select a JSON file containing the materials for testing.
+
+### Input JSON Format
+
+The input file must be a JSON object where each key is a material's chemical formula (as a string) and the corresponding value is a boolean indicating its true suitability for quantum computing (`true` if it is suitable, `false` otherwise).
+
+**Example (`materials.json`):**
+```json
+{
+  "Si": true,
+  "NaCl": false,
+}
+```
+
+### Output
+
+After processing, the application will display a confusion matrix summarizing the results:
+-   **True Positives (TP):** Materials correctly identified as suitable.
+-   **True Negatives (TN):** Materials correctly identified as unsuitable.
+-   **False Positives (FP):** Materials incorrectly identified as suitable.
+-   **False Negatives (FN):** Materials incorrectly identified as unsuitable.
+
+Additionally, JSON files for each category (`truePositives.json`, `trueNegatives.json`, etc.) are saved in a directory chosen by the user.
 
 
 ## Disclaimer

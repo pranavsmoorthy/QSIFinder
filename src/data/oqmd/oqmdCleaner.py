@@ -6,17 +6,17 @@ import gemmi
 import numpy as np
 
 from data.matDataObj import matDataObj
-from utils.debug import log_debug
+from utils.debug import logDebug
 
 def filter(data):
     if data[0].get("dataFound"):
-        log_debug("Filtering...")
+        logDebug("Filtering...")
 
         ids = []
         structures = []
         matcher = StructureMatcher()
 
-        log_debug("Constructing Structure Objects...")
+        logDebug("Constructing Structure Objects...")
 
         for d in data:
             ids.append(d.get("oqmdId"))
@@ -30,13 +30,13 @@ def filter(data):
             struct.label = d.get("oqmdId")
             structures.append(struct)
 
-        log_debug("Sorting groups of duplicates...")
+        logDebug("Sorting groups of duplicates...")
         groups = matcher.group_structures(structures)
 
         sortedGroups = []
 
-        log_debug(f"Found these many unique results from OQMD: {len(groups)}")
-        log_debug("Sorting groups of duplicates...")
+        logDebug(f"Found these many unique results from OQMD: {len(groups)}")
+        logDebug("Sorting groups of duplicates...")
         for group in groups:
             subgroup = []
 
@@ -54,18 +54,18 @@ def filter(data):
 
         finalizedCandidates = []
 
-        log_debug("Finalizing candidates...")
+        logDebug("Finalizing candidates...")
         for group in sortedGroups:
             finalizedCandidates.append(group[0])
 
         finalizedSorted = sorted(finalizedCandidates, key=lambda x: (x[0]['hullDistance'], (abs(x[0]['bandGap'] - 1))))
         final = finalizedSorted[0]
 
-        log_debug("Determining final candidate's thickness")
+        logDebug("Determining final candidate's thickness")
         cVector = final[0].get("unitCell")[2]
         cParameter = np.linalg.norm(cVector)
 
-        log_debug("Finalized OQMD candidate")
+        logDebug("Finalized OQMD candidate")
 
         return matDataObj(
             formula=final[0].get("formula"), 

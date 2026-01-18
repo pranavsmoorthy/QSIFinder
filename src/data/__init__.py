@@ -1,3 +1,3 @@
-from utils.debug import log_debug
+from utils.debug import logDebug
 from .matDataObj import matDataObj
-log_debug("Successfully imported data module")
+logDebug("Successfully imported data module")

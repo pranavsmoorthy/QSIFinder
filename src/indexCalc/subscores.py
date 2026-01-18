@@ -1,4 +1,4 @@
-from utils.debug import log_debug
+from utils.debug import logDebug
 from src.data import matDataObj
 from math import e
 
@@ -92,13 +92,13 @@ def getTotalIndex(data:matDataObj, weights:dict=weightsDefault):
     thSubscore = getThicknessSubscore(thickness)
     sySubscore = getSymmetrySubscore(symmetry)
 
-    log_debug(f"Band Gap Subscore: {bgSubscore} (Weight: {bgWeight})")
-    log_debug(f"Stability Subscore: {stSubscore} (Weight: {stWeight})")
-    log_debug(f"Formation Energy Subscore: {feSubscore} (Weight: {feWeight})")
-    log_debug(f"Thickness Subscore: {thSubscore} (Weight: {thWeight})")
-    log_debug(f"Symmetry Subscore: {sySubscore} (Weight: {syWeight})")
+    logDebug(f"Band Gap Subscore: {bgSubscore} (Weight: {bgWeight})")
+    logDebug(f"Stability Subscore: {stSubscore} (Weight: {stWeight})")
+    logDebug(f"Formation Energy Subscore: {feSubscore} (Weight: {feWeight})")
+    logDebug(f"Thickness Subscore: {thSubscore} (Weight: {thWeight})")
+    logDebug(f"Symmetry Subscore: {sySubscore} (Weight: {syWeight})")
 
-    sub_scores = [stSubscore, bgSubscore, feSubscore, thSubscore, sySubscore]
+    subScores = [stSubscore, bgSubscore, feSubscore, thSubscore, sySubscore]
 
     indexInfo = [
         [bgSubscore, bgWeight],
@@ -113,4 +113,4 @@ def getTotalIndex(data:matDataObj, weights:dict=weightsDefault):
     for i in indexInfo:
         index *= (i[0] ** i[1])
 
-    return {'index': index, 'sub_scores': sub_scores}
+    return {'index': index, 'subScores': subScores}

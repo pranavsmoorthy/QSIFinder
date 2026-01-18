@@ -6,18 +6,18 @@ import os
 from dotenv import load_dotenv
 from mp_api.client import MPRester
 
-from utils.debug import log_debug
+from utils.debug import logDebug
 from data.matDataObj import matDataObj
 
 load_dotenv()
-MP_KEY = os.getenv("MP_KEY")
+mpKey = os.getenv("MP_KEY")
 
 
 def filter(data):
     if data[0].get("dataFound"):
-        log_debug("Filtering...")
+        logDebug("Filtering...")
 
-        with MPRester(MP_KEY) as mpr:
+        with MPRester(mpKey) as mpr:
             ids = []
             matcher = StructureMatcher()
 
@@ -33,13 +33,13 @@ def filter(data):
                 struct.label = str(doc.material_id) 
                 structures.append(struct)
 
-            log_debug("Identifying and grouping dupes...")
+            logDebug("Identifying and grouping dupes...")
             groups = matcher.group_structures(structures)
 
             sortedGroups = []
 
-            log_debug(f"Found these many unique results from MP: {len(groups)}")
-            log_debug("Sorting groups of duplicates...")
+            logDebug(f"Found these many unique results from MP: {len(groups)}")
+            logDebug("Sorting groups of duplicates...")
             for group in groups:
                 subgroup = []
 
@@ -52,14 +52,14 @@ def filter(data):
 
             finalizedCandidates = []
 
-            log_debug("Finalizing candidates...")
+            logDebug("Finalizing candidates...")
             for group in sortedGroups:
                 finalizedCandidates.append(group[0])
 
             finalizedSorted = sorted(finalizedCandidates, key=lambda x: (x[0]['hullDistance'], abs(x[0]['bandGap'] - 1)))
             final = finalizedSorted[0]
 
-            log_debug("Finalized MP candidate")
+            logDebug("Finalized MP candidate")
 
             return matDataObj(
                 formula=final[0].get("formula"), 

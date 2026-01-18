@@ -3,26 +3,26 @@ import traceback
 import os
 
 logger = logging.getLogger(__name__)
-_debug_mode = False
+debugMode = False
 
 if os.name == 'nt':
     _ = os.system('cls')
 else:
     _ = os.system('clear')
 
-def set_debug_mode(status: bool):
-    global _debug_mode
-    _debug_mode = status
+def setDebugMode(status: bool):
+    global debugMode
+    debugMode = status
 
-def is_debug_mode():
-    return _debug_mode
+def isDebugMode():
+    return debugMode
 
-def log_debug(message: str):
-    if is_debug_mode():
+def logDebug(message: str):
+    if isDebugMode():
         print(f"[DEBUG] {message}")
     logger.info(message)
 
-def log_error():
-    if is_debug_mode():
+def logError():
+    if isDebugMode():
         logger.error(traceback.format_exc())
 

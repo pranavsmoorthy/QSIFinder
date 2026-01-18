@@ -1,26 +1,26 @@
 from qmpy_rester import QMPYRester
-from utils.debug import log_debug, log_error
+from utils.debug import logDebug, logError
 import subprocess
 
-def retrieveOQMDData(formula):
+def retrieveOqmdData(formula):
     try:
-        log_debug("Retrieving OQMD data...")
+        logDebug("Retrieving OQMD data...")
         with QMPYRester() as oqmdr:
             kwargs = {
                 "composition": formula,  
             }
 
-            dataFromOQMD = oqmdr.get_oqmd_phases(verbose=False, **kwargs)
-            log_debug("Retrieved data from OQMD. Putting into dictionary...")
-            log_debug(f"Found these many results from OQMD: {len(dataFromOQMD.get("data")) if len(dataFromOQMD.get("data")) != 0 else "None"}")
+            dataFromOqmd = oqmdr.get_oqmd_phases(verbose=False, **kwargs)
+            logDebug("Retrieved data from OQMD. Putting into dictionary...")
+            logDebug(f"Found these many results from OQMD: {len(dataFromOqmd.get("data")) if len(dataFromOqmd.get("data")) != 0 else "None"}")
 
 
             data = []
 
-            if len(dataFromOQMD.get("data")) != 0:
+            if len(dataFromOqmd.get("data")) != 0:
                 item = 1
-                for d in dataFromOQMD.get("data"):
-                    log_debug("Retrieving Structure: " + (" " if item < 10 else "") + str(item) + "/" + str(len(dataFromOQMD.get("data"))))
+                for d in dataFromOqmd.get("data"):
+                    logDebug("Retrieving Structure: " + (" " if item < 10 else "") + str(item) + "/" + str(len(dataFromOqmd.get("data"))))
                     item += 1
 
                     structKwargs = { 
@@ -50,7 +50,7 @@ def retrieveOQMDData(formula):
 
             return data
     except Exception:
-        log_error()
+        logError()
 
         return [{
             "message": "Error occurred, most likely trying to parse the formula",

@@ -8,18 +8,18 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 formula = "MoS2"
 
 class TestMP(unittest.TestCase):
-    def test_mp_retrieval(self):
+    def testMpRetrieval(self):
         import src.data.mp as mp
         import json
 
-        print(json.dumps(mp.retrieveMPData(formula), indent=4))
+        print(json.dumps(mp.retrieveMpData(formula), indent=4))
 
-    def test_mp_cleaning(self):
+    def testMpCleaning(self):
         import src.data.mp as mp
         from src.data.matDataObj import matDataObj
-        from utils.debug import log_debug
+        from utils.debug import logDebug
 
-        data = mp.retrieveMPData(formula)
+        data = mp.retrieveMpData(formula)
         filteredData = mp.filter(data)
 
         print(str(filteredData))

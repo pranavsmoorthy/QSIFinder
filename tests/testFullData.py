@@ -8,35 +8,35 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 formula = "FeS2"
 
 class TestFull(unittest.TestCase):
-    def test_full_comparison(self):
+    def testFullComparison(self):
         import src.data.mp as mp
         import src.data.oqmd as oqmd
-        from utils.debug import log_debug
+        from utils.debug import logDebug
 
-        dataMP = mp.retrieveMPData(formula)
+        dataMP = mp.retrieveMpData(formula)
         filteredDataMP = mp.filter(dataMP)
 
-        dataOQMD = oqmd.retrieveOQMDData(formula)
+        dataOQMD = oqmd.retrieveOqmdData(formula)
         filteredDataOQMD = oqmd.filter(dataOQMD)
 
-        log_debug("MP Data: " + str(filteredDataMP))
-        log_debug("OQMD Data: " + str(filteredDataOQMD))
+        logDebug("MP Data: " + str(filteredDataMP))
+        logDebug("OQMD Data: " + str(filteredDataOQMD))
 
-    def test_full_flow(self):
+    def testFullFlow(self):
         import src.data.mp as mp
         import src.data.oqmd as oqmd
-        from utils.debug import log_debug
+        from utils.debug import logDebug
 
-        dataMP = mp.retrieveMPData(formula)
+        dataMP = mp.retrieveMpData(formula)
         finalCandidate = None
 
         if dataMP[0].get("dataFound"):
             finalCandidate = mp.filter(dataMP)
         else:
-            dataOQMD = oqmd.retrieveOQMDData(formula)
+            dataOQMD = oqmd.retrieveOqmdData(formula)
             finalCandidate = oqmd.filter(dataOQMD)
 
-        log_debug("Final Candidate: " + str(finalCandidate))
+        logDebug("Final Candidate: " + str(finalCandidate))
 
 if __name__ == '__main__':
     unittest.main()

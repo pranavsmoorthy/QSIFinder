@@ -8,21 +8,21 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 formula = "InP"
 
 class TestOQMD(unittest.TestCase):
-    def test_oqmd_retrieval(self):
+    def testOqmdRetrieval(self):
         import src.data.oqmd as oqmd
-        from utils.debug import log_debug
+        from utils.debug import logDebug
         import json
 
-        log_debug(json.dumps(oqmd.retrieveOQMDData(formula), indent=4))
+        logDebug(json.dumps(oqmd.retrieveOqmdData(formula), indent=4))
 
-    def test_oqmd_cleaning(self):
+    def testOqmdCleaning(self):
         import src.data.oqmd as oqmd
-        from utils.debug import log_debug
+        from utils.debug import logDebug
 
-        data = oqmd.retrieveOQMDData(formula)
+        data = oqmd.retrieveOqmdData(formula)
         filteredData = oqmd.filter(data)
 
-        log_debug(str(filteredData))
+        logDebug(str(filteredData))
 
 if __name__ == '__main__':
     unittest.main()

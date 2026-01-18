@@ -1,5 +1,5 @@
-from .oqmdRetriever import retrieveOQMDData
+from .oqmdRetriever import retrieveOqmdData
 from .oqmdCleaner import filter
 
-from utils.debug import log_debug
-log_debug("Successfully imported OQMD data module")
+from utils.debug import logDebug
+logDebug("Successfully imported OQMD data module")

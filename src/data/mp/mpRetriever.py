@@ -1,17 +1,17 @@
 import os
 from mp_api.client import MPRester
 from dotenv import load_dotenv
-from utils.debug import log_debug, log_error
+from utils.debug import logDebug, logError
 
 import traceback;
 
 load_dotenv()
-MP_KEY = os.getenv("MP_KEY")
+mpKey = os.getenv("MP_KEY")
 
-def retrieveMPData(formula):
+def retrieveMpData(formula):
     try:
-        with MPRester(MP_KEY) as mpr:
-            log_debug("Retrieving entries from MP...")
+        with MPRester(mpKey) as mpr:
+            logDebug("Retrieving entries from MP...")
 
             docs = mpr.materials.summary.search(
                 formula=formula,
@@ -27,7 +27,7 @@ def retrieveMPData(formula):
                 ],
             )
             
-            log_debug("Retrieved data from MP. Putting into dictionary...")
+            logDebug("Retrieved data from MP. Putting into dictionary...")
 
             data = []
 
@@ -50,11 +50,11 @@ def retrieveMPData(formula):
                     "dataFound": False
                 })
 
-            log_debug(f"Found these many results from MP: {len(data) if data[0].get("dataFound") else "None"}")
+            logDebug(f"Found these many results from MP: {len(data) if data[0].get("dataFound") else "None"}")
 
             return data
     except Exception:
-        log_error()
+        logError()
 
         return [{
             "message": "Error occurred, most likely trying to parse the formula",

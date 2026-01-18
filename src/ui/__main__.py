@@ -24,11 +24,11 @@ from src.data.oqmd import oqmdRetriever as oqmd
 from src.data.mp import mpCleaner
 from src.data.oqmd import oqmdCleaner
 from src.indexCalc import subscores as ic
-from utils.debug import log_debug
+from utils.debug import logDebug
 from src.data.matDataObj import matDataObj
-from src.bulkTest.calculator import calculate_qsi
+from src.bulkTest.calculator import calculateQsi
 
-PROPERTY_DISPLAY_NAMES = {
+propertyDisplayNames = {
     "stability": "Stability",
     "bandGap": "Band Gap",
     "formationEnergy": "Formation Energy",
@@ -37,34 +37,34 @@ PROPERTY_DISPLAY_NAMES = {
 }
 
 class QTextEditLogger(logging.Handler, QObject):
-    append_text = pyqtSignal(str)
-    message_logged = pyqtSignal(str)
+    appendText = pyqtSignal(str)
+    messageLogged = pyqtSignal(str)
 
     def __init__(self, parent):
         super().__init__()
         QObject.__init__(self)
         self.widget = parent
-        self.append_text.connect(self.widget.append)
+        self.appendText.connect(self.widget.append)
         self.setFormatter(logging.Formatter('%(message)s'))
 
     def emit(self, record):
         msg = self.format(record)
-        self.append_text.emit(msg)
-        self.message_logged.emit(msg)
+        self.appendText.emit(msg)
+        self.messageLogged.emit(msg)
 
 class CalculationWorker(QObject):
     finished = pyqtSignal(dict)
 
-    def __init__(self, formula, force_oqmd, weights):
+    def __init__(self, formula, forceOqmd, weights):
         super().__init__()
         self.formula = formula
-        self.force_oqmd = force_oqmd
+        self.forceOqmd = forceOqmd
         self.weights = weights
 
     def run(self):
-        log_debug("Worker thread started.")
-        result = calculate_qsi(self.formula, self.force_oqmd, self.weights)
-        log_debug("Index Calculated: " + str(result.get('index')))
+        logDebug("Worker thread started.")
+        result = calculateQsi(self.formula, self.forceOqmd, self.weights)
+        logDebug("Index Calculated: " + str(result.get('index')))
         self.finished.emit(result)
 
 class RadarChart(FigureCanvas):
@@ -89,11 +89,11 @@ class RadarChart(FigureCanvas):
         self.axes.spines['polar'].set_visible(False) # Remove outer circle for cleaner look
 
         angles = np.linspace(0, 2 * np.pi, len(labels), endpoint=False).tolist()
-        data_with_loop = data + data[:1]
-        angles_with_loop = angles + angles[:1]
+        dataWithLoop = data + data[:1]
+        anglesWithLoop = angles + angles[:1]
 
-        self.axes.plot(angles_with_loop, data_with_loop, 'o-', color='#00d1b2', linewidth=2, markersize=5)
-        self.axes.fill(angles_with_loop, data_with_loop, color='#00d1b2', alpha=0.25)
+        self.axes.plot(anglesWithLoop, dataWithLoop, 'o-', color='#00d1b2', linewidth=2, markersize=5)
+        self.axes.fill(anglesWithLoop, dataWithLoop, color='#00d1b2', alpha=0.25)
         self.axes.set_thetagrids(np.degrees(angles), labels)
         self.axes.set_ylim(0, 1)
         
@@ -132,8 +132,8 @@ class DonutChart(FigureCanvas):
         # Use a slightly thinner ring for a modern look
         self.axes.pie(values, colors=colors, startangle=90, wedgeprops=dict(width=0.25, edgecolor='#1e1e1e'))
 
-        center_circle = plt.Circle((0,0), 0.75, fc='none')
-        self.axes.add_artist(center_circle)
+        centerCircle = plt.Circle((0,0), 0.75, fc='none')
+        self.axes.add_artist(centerCircle)
 
         self.axes.text(0, 0, f'{value:.2f}', ha='center', va='center', fontsize=24, weight='bold', color='white', fontname='Arial')
         
@@ -219,26 +219,26 @@ class MainWindow(QMainWindow):
             }
         """)
 
-        main_widget = QWidget()
-        self.setCentralWidget(main_widget)
-        main_layout = QHBoxLayout(main_widget)
+        mainWidget = QWidget()
+        self.setCentralWidget(mainWidget)
+        mainLayout = QHBoxLayout(mainWidget)
 
-        left_panel = QWidget()
-        left_layout = QVBoxLayout(left_panel)
-        main_layout.addWidget(left_panel)
+        leftPanel = QWidget()
+        leftLayout = QVBoxLayout(leftPanel)
+        mainLayout.addWidget(leftPanel)
 
-        formula_group = QGroupBox("Chemical Formula")
-        formula_layout = QVBoxLayout()
-        self.formula_input = QLineEdit()
-        self.formula_input.setPlaceholderText("e.g., MoS2")
-        formula_layout.addWidget(self.formula_input)
-        formula_group.setLayout(formula_layout)
-        left_layout.addWidget(formula_group)
+        formulaGroup = QGroupBox("Chemical Formula")
+        formulaLayout = QVBoxLayout()
+        self.formulaInput = QLineEdit()
+        self.formulaInput.setPlaceholderText("e.g., MoS2")
+        formulaLayout.addWidget(self.formulaInput)
+        formulaGroup.setLayout(formulaLayout)
+        leftLayout.addWidget(formulaGroup)
 
-        weights_group = QGroupBox("Sub-index Weights")
-        weights_layout = QFormLayout()
+        weightsGroup = QGroupBox("Sub-index Weights")
+        weightsLayout = QFormLayout()
         
-        default_weights = {
+        defaultWeights = {
             "stability": 0.35,
             "bandGap": 0.3,
             "formationEnergy": 0.15,
@@ -246,69 +246,69 @@ class MainWindow(QMainWindow):
             "symmetry": 0.1
         }
 
-        self.weights_inputs = {
+        self.weightsInputs = {
             "stability": QDoubleSpinBox(),
             "bandGap": QDoubleSpinBox(),
             "formationEnergy": QDoubleSpinBox(),
             "thickness": QDoubleSpinBox(),
             "symmetry": QDoubleSpinBox()
         }
-        for name, spinbox in self.weights_inputs.items():
+        for name, spinbox in self.weightsInputs.items():
             spinbox.setRange(0.0, 1.0)
             spinbox.setSingleStep(0.05)
-            spinbox.setValue(default_weights.get(name, 0.0))
-            weights_layout.addRow(PROPERTY_DISPLAY_NAMES.get(name, name), spinbox)
-        weights_group.setLayout(weights_layout)
-        left_layout.addWidget(weights_group)
+            spinbox.setValue(defaultWeights.get(name, 0.0))
+            weightsLayout.addRow(propertyDisplayNames.get(name, name), spinbox)
+        weightsGroup.setLayout(weightsLayout)
+        leftLayout.addWidget(weightsGroup)
 
-        self.oqmd_checkbox = QCheckBox("Force OQMD Data")
-        left_layout.addWidget(self.oqmd_checkbox)
+        self.oqmdCheckbox = QCheckBox("Force OQMD Data")
+        leftLayout.addWidget(self.oqmdCheckbox)
 
-        self.calculate_button = QPushButton("Calculate QSI")
-        self.calculate_button.clicked.connect(self.start_calculation)
-        left_layout.addWidget(self.calculate_button)
+        self.calculateButton = QPushButton("Calculate QSI")
+        self.calculateButton.clicked.connect(self.startCalculation)
+        leftLayout.addWidget(self.calculateButton)
 
-        self.bulk_calculate_button = QPushButton("Start Bulk Calculation")
-        self.bulk_calculate_button.clicked.connect(self.start_bulk_calculation)
-        left_layout.addWidget(self.bulk_calculate_button)
+        self.bulkCalculateButton = QPushButton("Start Bulk Calculation")
+        self.bulkCalculateButton.clicked.connect(self.startBulkCalculation)
+        leftLayout.addWidget(self.bulkCalculateButton)
 
-        logs_group = QGroupBox("Logs")
-        logs_layout = QVBoxLayout()
-        self.logs_output = QTextEdit()
-        self.logs_output.setReadOnly(True)
-        logs_layout.addWidget(self.logs_output)
-        logs_group.setLayout(logs_layout)
-        left_layout.addWidget(logs_group)
+        logsGroup = QGroupBox("Logs")
+        logsLayout = QVBoxLayout()
+        self.logsOutput = QTextEdit()
+        self.logsOutput.setReadOnly(True)
+        logsLayout.addWidget(self.logsOutput)
+        logsGroup.setLayout(logsLayout)
+        leftLayout.addWidget(logsGroup)
 
-        right_panel = QWidget()
-        right_layout = QVBoxLayout(right_panel)
-        main_layout.addWidget(right_panel, 1)
+        rightPanel = QWidget()
+        right_layout = QVBoxLayout(rightPanel)
+        mainLayout.addWidget(rightPanel, 1)
 
-        self.stacked_widget = QStackedWidget()
-        right_layout.addWidget(self.stacked_widget)
+        self.stackedWidget = QStackedWidget()
+        right_layout.addWidget(self.stackedWidget)
 
         # Charts View (Index 0)
-        self.charts_view = QWidget()
-        charts_layout = QHBoxLayout(self.charts_view)
-        self.radar_chart = RadarChart(self.charts_view)
-        self.donut_chart = DonutChart(self.charts_view)
-        charts_layout.addWidget(self.radar_chart)
-        charts_layout.addWidget(self.donut_chart)
-        self.stacked_widget.addWidget(self.charts_view)
+        self.chartsView = QWidget()
+        chartsLayout = QHBoxLayout(self.chartsView)
+        self.radarChart = RadarChart(self.chartsView)
+        self.donutChart = DonutChart(self.chartsView)
+        chartsLayout.addWidget(self.radarChart)
+        chartsLayout.addWidget(self.donutChart)
+        self.stackedWidget.addWidget(self.chartsView)
 
         # Loading View (Index 1)
-        self.loading_view = QWidget()
-        loading_layout = QVBoxLayout(self.loading_view)
+        self.loadingView = QWidget()
+        loadingLayout = QVBoxLayout(self.loadingView)
         
-        loading_text = QLabel("Calculating Quantum Suitability Index...")
-        loading_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        loading_text.setStyleSheet("font-size: 20px; color: #007aff; font-weight: bold; margin-bottom: 20px;")
+        loadingText = QLabel("Calculating Quantum Suitability Index...")
+        loadingText.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        loadingText.setStyleSheet("font-size: 20px; color: #007aff; font-weight: bold; margin-bottom: 20px;")
         
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setRange(0, 0) # Indeterminate mode
-        self.progress_bar.setFixedHeight(6)
-        self.progress_bar.setTextVisible(False)
-        self.progress_bar.setStyleSheet("""
+        self.progressBar = QProgressBar()
+        self.progressBar.setRange(0, 0) # Indeterminate mode
+        self.progressBar.setFixedHeight(6)
+        self.progressBar.setTextVisible(False)
+        self.progressBar.setStyleSheet("""
             QProgressBar {
                 background-color: #2d2d2d;
                 border: none;
@@ -320,89 +320,89 @@ class MainWindow(QMainWindow):
             }
         """)
         
-        loading_layout.addStretch()
-        loading_layout.addWidget(loading_text)
-        loading_layout.addWidget(self.progress_bar)
-        loading_layout.addStretch()
-        self.stacked_widget.addWidget(self.loading_view)
+        loadingLayout.addStretch()
+        loadingLayout.addWidget(loadingText)
+        loadingLayout.addWidget(self.progressBar)
+        loadingLayout.addStretch()
+        self.stackedWidget.addWidget(self.loadingView)
 
-        initial_labels = [PROPERTY_DISPLAY_NAMES.get(k, k) for k in self.weights_inputs.keys()]
-        self.radar_chart.plot([0, 0, 0, 0, 0], initial_labels)
-        self.donut_chart.plot(0)
+        initialLabels = [propertyDisplayNames.get(k, k) for k in self.weightsInputs.keys()]
+        self.radarChart.plot([0, 0, 0, 0, 0], initialLabels)
+        self.donutChart.plot(0)
 
         self.setStatusBar(QStatusBar(self))
 
-        log_handler = QTextEditLogger(self.logs_output)
-        log_handler.message_logged.connect(self.statusBar().showMessage)
+        logHandler = QTextEditLogger(self.logsOutput)
+        logHandler.messageLogged.connect(self.statusBar().showMessage)
         
         from utils import debug
-        debug_logger = logging.getLogger('utils.debug')
-        debug_logger.addHandler(log_handler)
-        debug_logger.setLevel(logging.INFO)
+        debugLogger = logging.getLogger('utils.debug')
+        debugLogger.addHandler(logHandler)
+        debugLogger.setLevel(logging.INFO)
 
-    def start_calculation(self):
-        self.logs_output.clear()
-        log_debug("Starting QSI calculation...")
+    def startCalculation(self):
+        self.logsOutput.clear()
+        logDebug("Starting QSI calculation...")
         
-        formula = self.formula_input.text()
+        formula = self.formulaInput.text()
         if not formula:
-            log_debug("Error: Please enter a chemical formula.")
+            logDebug("Error: Please enter a chemical formula.")
             return
 
-        force_oqmd = self.oqmd_checkbox.isChecked()
-        weights = {name: spinbox.value() for name, spinbox in self.weights_inputs.items()}
+        forceOqmd = self.oqmdCheckbox.isChecked()
+        weights = {name: spinbox.value() for name, spinbox in self.weightsInputs.items()}
 
-        total_weight = sum(weights.values())
-        if not math.isclose(total_weight, 1.0):
-            log_debug(f"Error: Weights must sum to 1.0 (current sum: {total_weight:.2f})")
+        totalWeight = sum(weights.values())
+        if not math.isclose(totalWeight, 1.0):
+            logDebug(f"Error: Weights must sum to 1.0 (current sum: {totalWeight:.2f})")
             return
 
-        self.calculate_button.setEnabled(False)
-        self.stacked_widget.setCurrentIndex(1) # Show loading screen
+        self.calculateButton.setEnabled(False)
+        self.stackedWidget.setCurrentIndex(1) # Show loading screen
         self.thread = QThread()
-        self.worker = CalculationWorker(formula, force_oqmd, weights)
+        self.worker = CalculationWorker(formula, forceOqmd, weights)
         self.worker.moveToThread(self.thread)
 
         self.thread.started.connect(self.worker.run)
-        self.worker.finished.connect(self.on_calculation_finished)
+        self.worker.finished.connect(self.onCalculationFinished)
         self.worker.finished.connect(self.thread.quit)
         self.worker.finished.connect(self.worker.deleteLater)
         self.thread.finished.connect(self.thread.deleteLater)
 
         self.thread.start()
 
-    def on_calculation_finished(self, result):
-        self.calculate_button.setEnabled(True)
-        self.stacked_widget.setCurrentIndex(0) # Show charts
+    def onCalculationFinished(self, result):
+        self.calculateButton.setEnabled(True)
+        self.stackedWidget.setCurrentIndex(0) # Show charts
         if result['error']:
-            log_debug(result['error'])
-            labels = [PROPERTY_DISPLAY_NAMES.get(k, k) for k in self.weights_inputs.keys()]
-            self.radar_chart.plot([0, 0, 0, 0, 0], labels)
-            self.donut_chart.plot(0)
+            logDebug(result['error'])
+            labels = [propertyDisplayNames.get(k, k) for k in self.weightsInputs.keys()]
+            self.radarChart.plot([0, 0, 0, 0, 0], labels)
+            self.donutChart.plot(0)
         else:
-            labels = [PROPERTY_DISPLAY_NAMES.get(k, k) for k in self.weights_inputs.keys()]
-            self.radar_chart.plot(result['sub_scores'], labels)
-            self.donut_chart.plot(result['index'])
+            labels = [propertyDisplayNames.get(k, k) for k in self.weightsInputs.keys()]
+            self.radarChart.plot(result['subScores'], labels)
+            self.donutChart.plot(result['index'])
         
-        log_debug("QSI calculation finished.")
+        logDebug("QSI calculation finished.")
 
-    def start_bulk_calculation(self):
-        log_debug("Opening file dialog for bulk test...")
+    def startBulkCalculation(self):
+        logDebug("Opening file dialog for bulk test...")
         dialog = QFileDialog(self)
         dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
         dialog.setNameFilter("JSON files (*.json)")
         if dialog.exec():
-            file_path = dialog.selectedFiles()[0]
-            log_debug(f"Starting bulk test with file: {file_path}")
+            filePath = dialog.selectedFiles()[0]
+            logDebug(f"Starting bulk test with file: {filePath}")
             
             # Use sys.executable to ensure we use the same python interpreter
             # that is running the main application (respecting virtual environments)
-            python_executable = sys.executable
-            script_path = os.path.join(os.path.dirname(__file__), '..', 'bulkTest', 'bulk_tester.py')
+            pythonExecutable = sys.executable
+            scriptPath = os.path.join(os.path.dirname(__file__), '..', 'bulkTest', 'bulkTester.py')
             
             # Launch the bulk tester as a completely separate process
-            subprocess.Popen([python_executable, script_path, file_path])
-            log_debug("Bulk test process started.")
+            subprocess.Popen([pythonExecutable, scriptPath, filePath])
+            logDebug("Bulk test process started.")
 
 
 if __name__ == "__main__":

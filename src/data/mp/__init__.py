@@ -1,5 +1,5 @@
-from .mpRetriever import retrieveMPData
+from .mpRetriever import retrieveMpData
 from .mpCleaner import filter
 
-from utils.debug import log_debug
-log_debug("Successfully imported MP data module")
+from utils.debug import logDebug
+logDebug("Successfully imported MP data module")

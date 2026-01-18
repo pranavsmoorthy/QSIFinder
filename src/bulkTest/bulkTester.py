@@ -18,18 +18,34 @@ def runBulkTest(inputFilePath, outputDir, threshold=0.7, progressCallback=None):
         logDebug(f"Error reading input file: {e}")
         return None
 
+    if not isinstance(materials, dict):
+        logDebug(f"Error: Input file content is not a valid JSON object (dictionary).")
+        return None
+
+    valid_material_items = []
+    initial_inconclusive_materials = []
+    for formula, isTrulySuitable in materials.items():
+        if isinstance(isTrulySuitable, bool):
+            valid_material_items.append((formula, isTrulySuitable))
+        else:
+            logDebug(f"Invalid format for '{formula}': value must be a boolean (true/false), but found '{isTrulySuitable}'. Adding to inconclusive materials due to input format error.")
+            initial_inconclusive_materials.append(formula)
+
+    if not valid_material_items and not initial_inconclusive_materials:
+        logDebug("No materials found in the input file after initial validation.")
+        return None
+
     chunkSize = 50
-    materialItems = list(materials.items())
-    totalMaterials = len(materialItems)
+    totalMaterials = len(valid_material_items)
     
     truePositives = {}
     trueNegatives = {}
     falsePositives = {}
     falseNegatives = {}
-    inconclusiveMaterials = []
+    inconclusiveMaterials = list(initial_inconclusive_materials)
 
     for i in range(0, totalMaterials, chunkSize):
-        chunk = materialItems[i:i+chunkSize]
+        chunk = valid_material_items[i:i+chunkSize]
         
         for processedCount, (formula, isTrulySuitable) in enumerate(chunk, start=i):
             logDebug(f"Processing {formula} ({processedCount + 1}/{totalMaterials})")

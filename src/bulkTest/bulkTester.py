@@ -13,84 +13,99 @@ def runBulkTest(inputFilePath, outputDir, threshold=0.7, progressCallback=None):
     logDebug(f"Starting bulk test with input file: {inputFilePath}")
     try:
         with open(inputFilePath, 'r') as f:
-            materials = json.load(f)
+            data = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError) as e:
         logDebug(f"Error reading input file: {e}")
         return None
 
-    if not isinstance(materials, dict):
-        logDebug(f"Error: Input file content is not a valid JSON object (dictionary).")
+    isValidationMode = isinstance(data, dict)
+    isPredictionMode = isinstance(data, list)
+
+    if not isValidationMode and not isPredictionMode:
+        logDebug(f"Error: Input file must be a JSON object (for validation) or a JSON array of formulas (for prediction).")
         return None
 
-    valid_material_items = []
-    initial_inconclusive_materials = []
-    for formula, isTrulySuitable in materials.items():
-        if isinstance(isTrulySuitable, bool):
-            valid_material_items.append((formula, isTrulySuitable))
-        else:
-            logDebug(f"Invalid format for '{formula}': value must be a boolean (true/false), but found '{isTrulySuitable}'. Adding to inconclusive materials due to input format error.")
-            initial_inconclusive_materials.append(formula)
+    materialItemsToProcess = []
+    inconclusiveMaterials = []
 
-    if not valid_material_items and not initial_inconclusive_materials:
-        logDebug("No materials found in the input file after initial validation.")
+    if isValidationMode:
+        for formula, isTrulySuitable in data.items():
+            if isinstance(isTrulySuitable, bool):
+                materialItemsToProcess.append((formula, isTrulySuitable))
+            else:
+                logDebug(f"Invalid format for '{formula}': value must be a boolean. Adding to inconclusive.")
+                inconclusiveMaterials.append(formula)
+    else: 
+        for i, item in enumerate(data):
+            if isinstance(item, str):
+                materialItemsToProcess.append((item, None))
+            else:
+                logDebug(f"Invalid item in array at index {i}: not a string formula. Adding to inconclusive.")
+                inconclusiveMaterials.append(str(item))
+
+    if not materialItemsToProcess and not inconclusiveMaterials:
+        logDebug("No materials found to process.")
         return None
 
     chunkSize = 50
-    totalMaterials = len(valid_material_items)
+    totalMaterials = len(materialItemsToProcess)
     
-    truePositives = {}
-    trueNegatives = {}
-    falsePositives = {}
-    falseNegatives = {}
-    inconclusiveMaterials = list(initial_inconclusive_materials)
+    allIndices = {}
+    truePositives, trueNegatives, falsePositives, falseNegatives = {}, {}, {}, {}
 
     for i in range(0, totalMaterials, chunkSize):
-        chunk = valid_material_items[i:i+chunkSize]
+        chunk = materialItemsToProcess[i:i+chunkSize]
         
         for processedCount, (formula, isTrulySuitable) in enumerate(chunk, start=i):
             logDebug(f"Processing {formula} ({processedCount + 1}/{totalMaterials})")
-            
             if progressCallback:
                 progressCallback(processedCount + 1, totalMaterials, formula)
 
             result = calculateQsi(formula)
             
-            if result.get('error'):
-                logDebug(f"Could not process {formula}: {result['error']}")
-                if formula not in inconclusiveMaterials: inconclusiveMaterials.append(formula)
+            if result.get('error') or result.get('index') is None:
+                logDebug(f"Could not process {formula}: {result.get('error', 'QSI is None')}")
+                if formula not in inconclusiveMaterials:
+                    inconclusiveMaterials.append(formula)
                 continue
 
             qsi = result['index']
-            if qsi is None:
-                if formula not in inconclusiveMaterials: inconclusiveMaterials.append(formula)
-                continue
+            allIndices[formula] = qsi
 
-            isPredictedSuitable = qsi >= threshold
-
-            if isTrulySuitable and isPredictedSuitable:
-                truePositives[formula] = qsi
-            elif not isTrulySuitable and not isPredictedSuitable:
-                trueNegatives[formula] = qsi
-            elif not isTrulySuitable and isPredictedSuitable:
-                falsePositives[formula] = qsi
-            elif isTrulySuitable and not isPredictedSuitable:
-                falseNegatives[formula] = qsi
+            if isValidationMode:
+                isPredictedSuitable = qsi >= threshold
+                if isTrulySuitable and isPredictedSuitable:
+                    truePositives[formula] = qsi
+                elif not isTrulySuitable and not isPredictedSuitable:
+                    trueNegatives[formula] = qsi
+                elif not isTrulySuitable and isPredictedSuitable:
+                    falsePositives[formula] = qsi
+                elif isTrulySuitable and not isPredictedSuitable:
+                    falseNegatives[formula] = qsi
         
-        writeChunkResults(outputDir, truePositives, trueNegatives, falsePositives, falseNegatives, inconclusiveMaterials)
+        writeChunkResults(outputDir, isValidationMode, allIndices,
+                             truePositives, trueNegatives, falsePositives, falseNegatives,
+                             inconclusiveMaterials)
 
     logDebug(f"Bulk test finished. Results saved in '{outputDir}' directory.")
     
-    return (len(truePositives), len(trueNegatives), len(falsePositives), len(falseNegatives), len(inconclusiveMaterials))
+    if isValidationMode:
+        return ('validation', (len(truePositives), len(trueNegatives), len(falsePositives), len(falseNegatives), len(allIndices), len(inconclusiveMaterials)))
+    else:
+        return ('prediction', (len(allIndices), len(inconclusiveMaterials)))
 
-def writeChunkResults(outputDir, tp, tn, fp, fn, inconclusive):
-    with open(os.path.join(outputDir, 'truePositives.json'), 'w') as f:
-        json.dump(tp, f, indent=4)
-    with open(os.path.join(outputDir, 'trueNegatives.json'), 'w') as f:
-        json.dump(tn, f, indent=4)
-    with open(os.path.join(outputDir, 'falsePositives.json'), 'w') as f:
-        json.dump(fp, f, indent=4)
-    with open(os.path.join(outputDir, 'falseNegatives.json'), 'w') as f:
-        json.dump(fn, f, indent=4)
+def writeChunkResults(outputDir, isValidationMode, allIndices, tp, tn, fp, fn, inconclusive):
+    with open(os.path.join(outputDir, 'indices.json'), 'w') as f:
+        json.dump(allIndices, f, indent=4)
     with open(os.path.join(outputDir, 'inconclusive.json'), 'w') as f:
         json.dump(inconclusive, f, indent=4)
-    
+        
+    if isValidationMode:
+        with open(os.path.join(outputDir, 'truePositives.json'), 'w') as f:
+            json.dump(tp, f, indent=4)
+        with open(os.path.join(outputDir, 'trueNegatives.json'), 'w') as f:
+            json.dump(tn, f, indent=4)
+        with open(os.path.join(outputDir, 'falsePositives.json'), 'w') as f:
+            json.dump(fp, f, indent=4)
+        with open(os.path.join(outputDir, 'falseNegatives.json'), 'w') as f:
+            json.dump(fn, f, indent=4)

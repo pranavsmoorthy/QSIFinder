@@ -7,7 +7,7 @@
   - [Core Approach](#core-approach)
   - [Measured Properties](#measured-properties)
   - [Data Sources](#data-sources)
-- [Model Validation and Bulk Testing](#model-validation-and-bulk-testing)
+- [Bulk Testing And Analysis](#bulk-testing-and-analysis)
 - [DISCLAIMER!!](#disclaimer)
 
 ## The Problem
@@ -113,35 +113,61 @@ To ensure data quality and mitigate biases from any single source, data will be 
 
 Furthermore, the equations as well as a rudimentary version of the model can be found at this link: https://www.desmos.com/calculator/n7tveikjv6
 
-## Model Validation and Bulk Testing
+## Bulk Testing and Analysis
 
-To assess the accuracy and performance of the QSI model, a bulk testing feature is included. This utility processes a list of known materials and compares the model's predictions against their true suitability, presenting the results in a confusion matrix.
+The project includes a powerful bulk testing utility that operates in two distinct modes: **Validation Mode** to test the QSI model's accuracy against known data, and **Prediction Mode** to efficiently calculate the QSI for a list of new materials.
 
 ### Running the Bulk Tester
 
-This command will open a file dialog, prompting you to select a JSON file containing the materials for testing.
+Both modes are initiated through the main UI:
 
-### Input JSON Format
+```bash
+python -m src.ui
+```
 
-The input file must be a JSON object where each key is a material's chemical formula (as a string) and the corresponding value is a boolean indicating its true suitability for quantum computing (`true` if it is suitable, `false` otherwise).
+Clicking the "Start Bulk Calculation" button will open a file dialog. The format of the selected JSON file determines which mode the tester will run in.
 
-**Example (`materials.json`):**
+### Validation Mode
+
+This mode is for assessing the accuracy of the QSI model. It compares the model's predictions against a ground truth dataset.
+
+**Input Format (JSON Object):**
+The input file must be a JSON object where each key is a material's formula and the value is a boolean (`true` or `false`) indicating its known suitability.
+
+*Example (`validation_set.json`):*
 ```json
 {
   "Si": true,
   "NaCl": false,
+  "Graphene": true
 }
 ```
 
-### Output
+**Output:**
+-   **Confusion Matrix UI:** After processing, a window appears displaying a confusion matrix with True Positives, True Negatives, False Positives, and False Negatives.
+-   **JSON Files:** Detailed reports for each category (`truePositives.json`, `trueNegatives.json`, etc.), inconclusive materials (`inconclusive.json`), and a consolidated list of all calculated indices (`indices.json`) are saved to the chosen output directory.
 
-After processing, the application will display a confusion matrix summarizing the results:
--   **True Positives (TP):** Materials correctly identified as suitable.
--   **True Negatives (TN):** Materials correctly identified as unsuitable.
--   **False Positives (FP):** Materials incorrectly identified as suitable.
--   **False Negatives (FN):** Materials incorrectly identified as unsuitable.
+### Prediction Mode
 
-Additionally, JSON files for each category (`truePositives.json`, `trueNegatives.json`, etc.) are saved in a directory chosen by the user.
+This mode is for efficiently calculating the QSI for a list of materials without a known suitability.
+
+**Input Format (JSON Array):**
+The input file must be a JSON array containing a list of material formula strings.
+
+*Example (`prediction_set.json`):*
+```json
+[
+  "MoS2",
+  "WSe2",
+  "BN"
+]
+```
+
+**Output:**
+-   **Confirmation Dialog:** After processing, a message box confirms the number of materials processed and the location of the output files. No confusion matrix is shown.
+-   **JSON Files:** The results are saved to two files in the chosen output directory:
+    -   `indices.json`: A dictionary mapping each successfully processed material to its calculated QSI value.
+    -   `inconclusive.json`: A list of materials that could not be processed.
 
 
 ## Disclaimer

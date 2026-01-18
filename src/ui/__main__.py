@@ -11,7 +11,7 @@ from PyQt6.QtCore import pyqtSignal, QObject, QThread, Qt
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLineEdit, QPushButton, QLabel, QCheckBox, QGroupBox, QFormLayout, QDoubleSpinBox,
-    QTextEdit, QStatusBar, QStackedWidget, QProgressBar, QFileDialog
+    QTextEdit, QStatusBar, QStackedWidget, QProgressBar, QFileDialog, QMessageBox
 )
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -451,16 +451,46 @@ class MainWindow(QMainWindow):
         self.stackedWidget.setCurrentIndex(0)
         
         if results:
-            logDebug("Showing confusion matrix")
-            tp, tn, fp, fn, inconclusiveCount = results
+            mode, resultData = results
             
-            self.matrixWindow = ConfusionMatrixWindow(tp, tn, fp, fn, inconclusiveCount)
-            self.matrixWindow.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-            self.matrixWindow.show()
+            if mode == 'validation':
+                logDebug("Showing confusion matrix")
+                tp, tn, fp, fn, calculatedCount, inconclusiveCount = resultData
+                
+                self.matrixWindow = ConfusionMatrixWindow(tp, tn, fp, fn, inconclusiveCount)
+                self.matrixWindow.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+                self.matrixWindow.show()
+
+                msgBox = QMessageBox()
+                msgBox.setIcon(QMessageBox.Icon.Information)
+                msgBox.setText("Calculation Complete")
+                msgBox.setInformativeText(f"Successfully calculated indices for {calculatedCount} materials.\n"
+                                          f"{inconclusiveCount} materials were inconclusive.\n\n"
+                                          "Results have been saved to the 'falseNegatives.json', 'falsePositives.json', 'trueNegatives.json', 'truePositives.json', and 'inconclusive.json' files in your selected output directory.")
+                msgBox.setWindowTitle("Bulk Test Finished")
+                msgBox.setStandardButtons(QMessageBox.StandardButton.Ok)
+                msgBox.exec()
+                
+                logDebug(f"Validation finished with {inconclusiveCount} inconclusive results.")
+            
+            elif mode == 'prediction':
+                calculatedCount, inconclusiveCount = resultData
+                logDebug(f"Calculation finished. Results saved to output directory.")
+                
+                msgBox = QMessageBox()
+                msgBox.setIcon(QMessageBox.Icon.Information)
+                msgBox.setText("Calculation Complete")
+                msgBox.setInformativeText(f"Successfully calculated indices for {calculatedCount} materials.\n"
+                                          f"{inconclusiveCount} materials were inconclusive.\n\n"
+                                          "Results have been saved to the 'indices.json' and 'inconclusive.json' files in your selected output directory.")
+                msgBox.setWindowTitle("Bulk Test Finished")
+                msgBox.setStandardButtons(QMessageBox.StandardButton.Ok)
+                msgBox.exec()
+
         else:
             logDebug("Bulk test failed or was cancelled.")
+            logDebug("Bulk calculation finished.")
         
-        logDebug("Bulk calculation finished.")
 
 
 if __name__ == "__main__":

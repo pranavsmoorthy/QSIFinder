@@ -5,7 +5,6 @@ import logging
 import os
 import subprocess
 
-# Add the project root to the python path
 sys.path.insert(0, '.')
 
 from PyQt6.QtCore import pyqtSignal, QObject, QThread, Qt
@@ -18,7 +17,6 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
-# Backend imports
 from src.data.mp import mpRetriever as mp
 from src.data.oqmd import oqmdRetriever as oqmd
 from src.data.mp import mpCleaner
@@ -26,7 +24,8 @@ from src.data.oqmd import oqmdCleaner
 from src.indexCalc import subscores as ic
 from utils.debug import logDebug
 from src.data.matDataObj import matDataObj
-from src.bulkTest.calculator import calculateQsi
+from indexCalc.calculator import calculateQsi
+from src.bulkTest import runBulkTest, ConfusionMatrixWindow
 
 propertyDisplayNames = {
     "stability": "Stability",
@@ -54,6 +53,7 @@ class QTextEditLogger(logging.Handler, QObject):
 
 class CalculationWorker(QObject):
     finished = pyqtSignal(dict)
+    progress = pyqtSignal(int, int, str)
 
     def __init__(self, formula, forceOqmd, weights):
         super().__init__()
@@ -66,6 +66,20 @@ class CalculationWorker(QObject):
         result = calculateQsi(self.formula, self.forceOqmd, self.weights)
         logDebug("Index Calculated: " + str(result.get('index')))
         self.finished.emit(result)
+
+class BulkCalculationWorker(QObject):
+    finished = pyqtSignal(object)
+    progress = pyqtSignal(int, int, str)
+
+    def __init__(self, inputFile, outputDir):
+        super().__init__()
+        self.inputFile = inputFile
+        self.outputDir = outputDir
+
+    def run(self):
+        logDebug("Bulk worker thread started.")
+        results = runBulkTest(self.inputFile, self.outputDir, progressCallback=self.progress.emit)
+        self.finished.emit(results)
 
 class RadarChart(FigureCanvas):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
@@ -81,12 +95,11 @@ class RadarChart(FigureCanvas):
         self.axes.clear()
         self.axes.patch.set_alpha(0)
         
-        # Professional Styling
         self.axes.tick_params(axis='x', colors='white', labelsize=10)
         self.axes.tick_params(axis='y', colors='white', labelsize=8)
         self.axes.yaxis.grid(color='white', linestyle='dashed', alpha=0.2)
         self.axes.xaxis.grid(color='white', linestyle='dashed', alpha=0.2)
-        self.axes.spines['polar'].set_visible(False) # Remove outer circle for cleaner look
+        self.axes.spines['polar'].set_visible(False) 
 
         angles = np.linspace(0, 2 * np.pi, len(labels), endpoint=False).tolist()
         dataWithLoop = data + data[:1]
@@ -97,7 +110,6 @@ class RadarChart(FigureCanvas):
         self.axes.set_thetagrids(np.degrees(angles), labels)
         self.axes.set_ylim(0, 1)
         
-        # Ensure grid lines are drawn below the plot
         self.axes.set_axisbelow(True)
         
         self.figure.canvas.draw()
@@ -118,18 +130,16 @@ class DonutChart(FigureCanvas):
         
         value = max(0, min(1, value))
 
-        # Professional Color Palette
         if value < 0.33:
-            color = '#ff3860' # Red
+            color = '#ff3860' 
         elif value < 0.66:
-            color = '#ffdd57' # Yellow/Orange
+            color = '#ffdd57' 
         else:
-            color = '#23d160' # Green
+            color = '#23d160' 
 
         values = [value, 1 - value]
-        colors = [color, '#2d2d2d'] # Dark grey for the remaining part
+        colors = [color, '#2d2d2d'] 
         
-        # Use a slightly thinner ring for a modern look
         self.axes.pie(values, colors=colors, startangle=90, wedgeprops=dict(width=0.25, edgecolor='#1e1e1e'))
 
         centerCircle = plt.Circle((0,0), 0.75, fc='none')
@@ -147,7 +157,6 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Quantum Suitability Index (QSI) Calculator")
         self.setFixedSize(1200, 700)
 
-        # Apply Dark Theme
         self.setStyleSheet("""
             QMainWindow {
                 background-color: #1e1e1e;
@@ -287,7 +296,6 @@ class MainWindow(QMainWindow):
         self.stackedWidget = QStackedWidget()
         right_layout.addWidget(self.stackedWidget)
 
-        # Charts View (Index 0)
         self.chartsView = QWidget()
         chartsLayout = QHBoxLayout(self.chartsView)
         self.radarChart = RadarChart(self.chartsView)
@@ -296,16 +304,15 @@ class MainWindow(QMainWindow):
         chartsLayout.addWidget(self.donutChart)
         self.stackedWidget.addWidget(self.chartsView)
 
-        # Loading View (Index 1)
         self.loadingView = QWidget()
         loadingLayout = QVBoxLayout(self.loadingView)
         
-        loadingText = QLabel("Calculating Quantum Suitability Index...")
-        loadingText.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        loadingText.setStyleSheet("font-size: 20px; color: #007aff; font-weight: bold; margin-bottom: 20px;")
+        self.loadingText = QLabel("Calculating Quantum Suitability Index...")
+        self.loadingText.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.loadingText.setStyleSheet("font-size: 20px; color: #007aff; font-weight: bold; margin-bottom: 20px;")
         
         self.progressBar = QProgressBar()
-        self.progressBar.setRange(0, 0) # Indeterminate mode
+        self.progressBar.setRange(0, 0) 
         self.progressBar.setFixedHeight(6)
         self.progressBar.setTextVisible(False)
         self.progressBar.setStyleSheet("""
@@ -319,10 +326,15 @@ class MainWindow(QMainWindow):
                 border-radius: 3px;
             }
         """)
+
+        self.progressLabel = QLabel("")
+        self.progressLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.progressLabel.setStyleSheet("font-size: 12px; color: #aaaaaa; margin-top: 5px;")
         
         loadingLayout.addStretch()
-        loadingLayout.addWidget(loadingText)
+        loadingLayout.addWidget(self.loadingText)
         loadingLayout.addWidget(self.progressBar)
+        loadingLayout.addWidget(self.progressLabel)
         loadingLayout.addStretch()
         self.stackedWidget.addWidget(self.loadingView)
 
@@ -356,9 +368,14 @@ class MainWindow(QMainWindow):
         if not math.isclose(totalWeight, 1.0):
             logDebug(f"Error: Weights must sum to 1.0 (current sum: {totalWeight:.2f})")
             return
-
+        
+        self.loadingText.setText("Calculating Quantum Suitability Index...")
+        self.progressLabel.setText("")
+        self.progressBar.setRange(0, 0)
         self.calculateButton.setEnabled(False)
-        self.stackedWidget.setCurrentIndex(1) # Show loading screen
+        self.bulkCalculateButton.setEnabled(False)
+        self.stackedWidget.setCurrentIndex(1) 
+        
         self.thread = QThread()
         self.worker = CalculationWorker(formula, forceOqmd, weights)
         self.worker.moveToThread(self.thread)
@@ -373,7 +390,8 @@ class MainWindow(QMainWindow):
 
     def onCalculationFinished(self, result):
         self.calculateButton.setEnabled(True)
-        self.stackedWidget.setCurrentIndex(0) # Show charts
+        self.bulkCalculateButton.setEnabled(True)
+        self.stackedWidget.setCurrentIndex(0)
         if result['error']:
             logDebug(result['error'])
             labels = [propertyDisplayNames.get(k, k) for k in self.weightsInputs.keys()]
@@ -388,21 +406,61 @@ class MainWindow(QMainWindow):
 
     def startBulkCalculation(self):
         logDebug("Opening file dialog for bulk test...")
-        dialog = QFileDialog(self)
-        dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
-        dialog.setNameFilter("JSON files (*.json)")
-        if dialog.exec():
-            filePath = dialog.selectedFiles()[0]
-            logDebug(f"Starting bulk test with file: {filePath}")
+        inputFileDialog = QFileDialog(self)
+        inputFileDialog.setFileMode(QFileDialog.FileMode.ExistingFile)
+        inputFileDialog.setNameFilter("JSON files (*.json)")
+        
+        if inputFileDialog.exec():
+            inputFilePath = inputFileDialog.selectedFiles()[0]
+            logDebug(f"Starting bulk test with file: {inputFilePath}")
+
+            outputDir = QFileDialog.getExistingDirectory(None, "Select Output Directory")
+
+            if not outputDir:
+                logDebug("No output directory selected. Exiting.")
+                return
+
+            self.loadingText.setText("Running Bulk Test...")
+            self.progressLabel.setText("Initializing...")
+            self.progressBar.setRange(0, 100)
+            self.calculateButton.setEnabled(False)
+            self.bulkCalculateButton.setEnabled(False)
+            self.stackedWidget.setCurrentIndex(1)
+
+            self.thread = QThread()
+            self.worker = BulkCalculationWorker(inputFilePath, outputDir)
+            self.worker.moveToThread(self.thread)
+
+            self.worker.progress.connect(self.onBulkProgress)
+            self.thread.started.connect(self.worker.run)
+            self.worker.finished.connect(self.onBulkFinished)
+            self.worker.finished.connect(self.thread.quit)
+            self.worker.finished.connect(self.worker.deleteLater)
+            self.thread.finished.connect(self.thread.deleteLater)
+
+            self.thread.start()
+
+    def onBulkProgress(self, processed, total, formula):
+        progress = int((processed / total) * 100)
+        self.progressBar.setValue(progress)
+        self.progressLabel.setText(f"Processing {formula} ({processed}/{total})")
+
+    def onBulkFinished(self, results):
+        self.calculateButton.setEnabled(True)
+        self.bulkCalculateButton.setEnabled(True)
+        self.stackedWidget.setCurrentIndex(0)
+        
+        if results:
+            logDebug("Showing confusion matrix")
+            tp, tn, fp, fn, inconclusiveCount = results
             
-            # Use sys.executable to ensure we use the same python interpreter
-            # that is running the main application (respecting virtual environments)
-            pythonExecutable = sys.executable
-            scriptPath = os.path.join(os.path.dirname(__file__), '..', 'bulkTest', 'bulkTester.py')
-            
-            # Launch the bulk tester as a completely separate process
-            subprocess.Popen([pythonExecutable, scriptPath, filePath])
-            logDebug("Bulk test process started.")
+            self.matrixWindow = ConfusionMatrixWindow(tp, tn, fp, fn, inconclusiveCount)
+            self.matrixWindow.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+            self.matrixWindow.show()
+        else:
+            logDebug("Bulk test failed or was cancelled.")
+        
+        logDebug("Bulk calculation finished.")
 
 
 if __name__ == "__main__":

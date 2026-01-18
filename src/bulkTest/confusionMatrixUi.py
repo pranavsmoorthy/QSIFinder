@@ -11,7 +11,6 @@ class ConfusionMatrixWindow(QMainWindow):
         self.setCentralWidget(centralWidget)
         layout = QGridLayout(centralWidget)
 
-        # Headers
         layout.addWidget(QLabel(""), 0, 0)
         
         predictedTrueLabel = QLabel("Predicted True")
@@ -30,26 +29,25 @@ class ConfusionMatrixWindow(QMainWindow):
         actualFalseLabel.setObjectName("header")
         layout.addWidget(actualFalseLabel, 2, 0, Qt.AlignmentFlag.AlignRight)
 
-        # Matrix values
         tpLabel = QLabel(str(tp))
         tpLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
         tpLabel.setObjectName("value")
-        tpLabel.setStyleSheet("background-color: #007aff;") # Blue for correct prediction
+        tpLabel.setStyleSheet("background-color: #007aff;") 
 
         fpLabel = QLabel(str(fp))
         fpLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
         fpLabel.setObjectName("value")
-        fpLabel.setStyleSheet("background-color: #2d2d2d;") # Gray for false positive
+        fpLabel.setStyleSheet("background-color: #2d2d2d;") 
 
         fnLabel = QLabel(str(fn))
         fnLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
         fnLabel.setObjectName("value")
-        fnLabel.setStyleSheet("background-color: #2d2d2d;") # Gray for false negative
+        fnLabel.setStyleSheet("background-color: #2d2d2d;") 
 
         tnLabel = QLabel(str(tn))
         tnLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
         tnLabel.setObjectName("value")
-        tnLabel.setStyleSheet("background-color: #007aff;") # Blue for correct prediction
+        tnLabel.setStyleSheet("background-color: #007aff;") 
 
 
         layout.addWidget(tpLabel, 1, 1)
@@ -57,7 +55,6 @@ class ConfusionMatrixWindow(QMainWindow):
         layout.addWidget(fnLabel, 1, 2)
         layout.addWidget(tnLabel, 2, 2)
 
-        # Inconclusive count
         inconclusiveLabel = QLabel(f"Inconclusive/Not Found: {inconclusiveCount}")
         inconclusiveLabel.setObjectName("inconclusive")
         inconclusiveLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)

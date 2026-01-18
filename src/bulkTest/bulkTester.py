@@ -2,15 +2,11 @@ import json
 import os
 import sys
 
-# Add project root to Python path
 projectRoot = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, projectRoot)
 
-from PyQt6.QtWidgets import QApplication, QFileDialog
-
-from src.bulkTest.calculator import calculateQsi
+from indexCalc.calculator import calculateQsi
 from src.bulkTest.confusionMatrixUi import ConfusionMatrixWindow
-from src.bulkTest.bulkTestRunnerUi import BulkTestRunnerWindow
 from utils.debug import logDebug
 
 def runBulkTest(inputFilePath, outputDir, threshold=0.7, progressCallback=None):
@@ -22,7 +18,7 @@ def runBulkTest(inputFilePath, outputDir, threshold=0.7, progressCallback=None):
         logDebug(f"Error reading input file: {e}")
         return None
 
-    chunkSize = 45
+    chunkSize = 50
     materialItems = list(materials.items())
     totalMaterials = len(materialItems)
     
@@ -31,8 +27,6 @@ def runBulkTest(inputFilePath, outputDir, threshold=0.7, progressCallback=None):
     falsePositives = {}
     falseNegatives = {}
     inconclusiveMaterials = []
-
-
 
     for i in range(0, totalMaterials, chunkSize):
         chunk = materialItems[i:i+chunkSize]
@@ -66,7 +60,6 @@ def runBulkTest(inputFilePath, outputDir, threshold=0.7, progressCallback=None):
             elif isTrulySuitable and not isPredictedSuitable:
                 falseNegatives[formula] = qsi
         
-        # Write chunk results
         writeChunkResults(outputDir, truePositives, trueNegatives, falsePositives, falseNegatives, inconclusiveMaterials)
 
     logDebug(f"Bulk test finished. Results saved in '{outputDir}' directory.")
@@ -84,38 +77,4 @@ def writeChunkResults(outputDir, tp, tn, fp, fn, inconclusive):
         json.dump(fn, f, indent=4)
     with open(os.path.join(outputDir, 'inconclusive.json'), 'w') as f:
         json.dump(inconclusive, f, indent=4)
-
-def main():
-    if len(sys.argv) < 2:
-        print("Usage: python bulkTester.py <path_to_input.json>")
-        sys.exit(1)
-        
-    inputFile = sys.argv[1]
-
-    app = QApplication(sys.argv)
     
-    outputDir = QFileDialog.getExistingDirectory(None, "Select Output Directory")
-
-    if not outputDir:
-        logDebug("No output directory selected. Exiting.")
-        sys.exit(0)
-
-    runnerWindow = BulkTestRunnerWindow(inputFile)
-    runnerWindow.show()
-
-    def startTest(inputFile, progressCallback):
-        results = runBulkTest(inputFile, outputDir, progressCallback=progressCallback)
-        if results:
-            tp, tn, fp, fn, inconclusiveCount = results
-            runnerWindow.matrixWindow = ConfusionMatrixWindow(tp, tn, fp, fn, inconclusiveCount)
-            runnerWindow.matrixWindow.show()
-            runnerWindow.close()
-        else:
-            runnerWindow.close()
-
-    runnerWindow.startBulkTest(startTest)
-    
-    sys.exit(app.exec())
-
-if __name__ == '__main__':
-    main()

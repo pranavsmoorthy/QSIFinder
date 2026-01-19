@@ -24,7 +24,7 @@ This project aims to answer the question:
 
 The goal is to create an open-source application that:
 1.  Takes a material's name as input.
-2.  Outputs a "Quantum Suitability Index" (QSI) to indicate its feasibility for quantum computing.
+2.  Outputs a "Quantum Suitability Index" (QSI) to indicate its feasibility for quantum computing by checking how well it can be used to make quantum dot cores with.
 3.  Delivers accurate results in a time and cost-effective manner.
 
 ## Methodology

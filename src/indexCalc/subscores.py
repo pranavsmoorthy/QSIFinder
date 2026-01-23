@@ -13,7 +13,7 @@ weightsDefault = {
     "formationEnergy": 0.05
 }
 
-def getMagneticNoiseSubscore(formula, penaltyFactor=2.5):
+def getMagneticNoiseSubscore(formula, penaltyFactor=1):
     # Fluctuations in the local magnetic field (which is 
     # perceived as noise) destroy qubits by causing 
     # dephasing, making quantum computation impossible.

@@ -60,30 +60,55 @@ The QSI is calculated by evaluating five main properties of a material. Each pro
     -   **Default Parameters:** `decayConstant = 0.05`
 
 3.  **Formation Energy**
+
     -   **Description:** This metric indicates if a compound is more stable than its constituent elements. More negative values imply higher chemical stability.
+
     -   **Ideal Value:** Negative
+
     -   **Formula:** A sigmoid function favors negative values.
+
         ```math
+
         \text{score} = \frac{1}{1 + e^{\text{steepness} \cdot (\text{formationEnergy} - \text{cutoff})}}
+
         ```
+
     -   **Default Parameters:** `cutoff = 0`, `steepness = 2`
 
-4.  **Miniaturization Limits (Thickness)**
-    -   **Description:** This represents the smallest repeating volume of the material's crystal structure, indicating how small the material can be made. Thinner materials are preferred.
-    -   **Ideal Value:** ~0.6 nm (thickness of one atom)
-    -   **Formula:** An inverse power function is used, where the score is higher for thicknesses closer to an ideal thickness (0.6 nm).
+
+
+4.  **Magnetic Noise**
+
+    -   **Description:** Fluctuations in the local magnetic field destroy qubits by causing dephasing. This subscore penalizes materials with high average nuclear spin.
+
+    -   **Ideal Value:** 0 (low average nuclear spin)
+
+    -   **Formula:** A steep exponential decay function, penalizing even slightly positive average nuclear spin values.
+
         ```math
-        \text{score} = \frac{1}{1 + \text{sensitivity} \cdot (\text{thickness} - \text{idealThickness})^2}
+
+        \text{score} = e^{-\text{penaltyFactor} \cdot \text{avgNuclearSpin}}
+
         ```
-    -   **Default Parameters:** `minThickness = 0.3`, `sensitivity = 0.5`
+
+    -   **Default Parameters:** `penaltyFactor = 1`
+
+
 
 5.  **Structural Uniformity (Symmetry)**
+
     -   **Description:** This represents the degree of symmetry in the material's crystals. Higher symmetry (a higher space group number) is better for preserving quantum information. There are 230 space groups.
+
     -   **Ideal Value:** 230
+
     -   **Formula:** A power function with diminishing returns for higher symmetry.
+
         ```math
+
         \text{score} = \left(\frac{\text{symmetry}}{230}\right)^{\text{curvature}}
+
         ```
+
     -   **Default Parameters:** `curvature = 0.5`
 
 ### Quantum Suitability Index (QSI) Calculation
@@ -92,16 +117,16 @@ The individual subscores are combined into a single Quantum Suitability Index (Q
 
 **Formula:**
 ```math
-\text{QSI} = \text{score}_{\text{bg}}^{w_{\text{bg}}} \cdot \text{score}_{\text{st}}^{w_{\text{st}}} \cdot \text{score}_{\text{fe}}^{w_{\text{fe}}} \cdot \text{score}_{\text{th}}^{w_{\text{th}}} \cdot \text{score}_{\text{sy}}^{w_{\text{sy}}}
+\text{QSI} = \text{score}_{\text{bg}}^{w_{\text{bg}}} \cdot \text{score}_{\text{st}}^{w_{\text{st}}} \cdot \text{score}_{\text{fe}}^{w_{\text{fe}}} \cdot \text{score}_{\text{mn}}^{w_{\text{mn}}} \cdot \text{score}_{\text{sy}}^{w_{\text{sy}}}
 ```
 
 **Default Weights:**
 The default weights for each property are as follows:
--   `stability`: 0.35
--   `bandGap`: 0.3
--   `formationEnergy`: 0.15
--   `thickness`: 0.1
--   `symmetry`: 0.1
+-   `magneticNoise`: 0.45
+-   `stability`: 0.25
+-   `symmetry`: 0.15
+-   `bandGap`: 0.1
+-   `formationEnergy`: 0.05
 
 
 ### Data Sources

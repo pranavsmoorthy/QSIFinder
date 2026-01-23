@@ -61,10 +61,6 @@ def filter(data):
         finalizedSorted = sorted(finalizedCandidates, key=lambda x: (x[0]['hullDistance'], (abs(x[0]['bandGap'] - 1))))
         final = finalizedSorted[0]
 
-        logDebug("Determining final candidate's thickness")
-        cVector = final[0].get("unitCell")[2]
-        cParameter = np.linalg.norm(cVector)
-
         logDebug("Finalized OQMD candidate")
 
         return matDataObj(
@@ -72,7 +68,6 @@ def filter(data):
             bandGap=final[0].get("bandGap"), 
             hullDistance=final[0].get("hullDistance"), 
             formationEnergy=final[0].get("formationEnergy"), 
-            thickness=cParameter/10, 
             symmetry=final[0].get("symmetry")
         )
     else:

@@ -66,7 +66,6 @@ def filter(data):
                 bandGap=final[0].get("bandGap"), 
                 hullDistance=final[0].get("hullDistance"), 
                 formationEnergy=final[0].get("formationEnergy"), 
-                thickness=final[0].get("thickness")/10, 
                 symmetry=final[0].get("symmetry")
             )
     else:

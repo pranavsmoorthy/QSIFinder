@@ -24,14 +24,14 @@ from src.data.oqmd import oqmdCleaner
 from src.indexCalc import subscores as ic
 from utils.debug import logDebug
 from src.data.matDataObj import matDataObj
-from indexCalc.calculator import calculateQsi
+from src.indexCalc.calculator import calculateQsi
 from src.bulkTest import runBulkTest, ConfusionMatrixWindow
 
 propertyDisplayNames = {
     "stability": "Stability",
     "bandGap": "Band Gap",
     "formationEnergy": "Formation Energy",
-    "thickness": "Thickness",
+    "magneticNoise": "Magnetic Noise",
     "symmetry": "Symmetry"
 }
 
@@ -248,18 +248,18 @@ class MainWindow(QMainWindow):
         weightsLayout = QFormLayout()
         
         defaultWeights = {
-            "stability": 0.35,
-            "bandGap": 0.3,
-            "formationEnergy": 0.15,
-            "thickness": 0.1,
-            "symmetry": 0.1
+            "magneticNoise": 0.45,
+            "stability": 0.25,
+            "symmetry": 0.15,
+            "bandGap": 0.1,
+            "formationEnergy": 0.05
         }
 
         self.weightsInputs = {
             "stability": QDoubleSpinBox(),
             "bandGap": QDoubleSpinBox(),
             "formationEnergy": QDoubleSpinBox(),
-            "thickness": QDoubleSpinBox(),
+            "magneticNoise": QDoubleSpinBox(),
             "symmetry": QDoubleSpinBox()
         }
         for name, spinbox in self.weightsInputs.items():

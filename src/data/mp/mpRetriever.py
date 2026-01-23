@@ -22,7 +22,7 @@ def retrieveMpData(formula):
                     "band_gap", 
                     "energy_above_hull",
                     "formation_energy_per_atom",
-                    "structure", #Thickness at structure -> lattice -> c
+                    "structure",
                     "symmetry", #Number -> number
                 ],
             )
@@ -40,7 +40,6 @@ def retrieveMpData(formula):
                         "bandGap": d.band_gap,
                         "hullDistance": d.energy_above_hull,
                         "formationEnergy": d.formation_energy_per_atom,
-                        "thickness": d.structure.lattice.c,
                         "symmetry": d.symmetry.number,
                         "dataFound": True
                     })

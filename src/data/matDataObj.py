@@ -1,10 +1,9 @@
 class matDataObj:
-    def __init__(self, formula, bandGap, hullDistance, formationEnergy, thickness, symmetry):
+    def __init__(self, formula, bandGap, hullDistance, formationEnergy, symmetry):
         self.formula = formula
         self.bandGap = bandGap
         self.hullDistance = hullDistance
         self.formationEnergy = formationEnergy
-        self.thickness = thickness
         self.symmetry = symmetry
 
     @classmethod
@@ -14,7 +13,6 @@ class matDataObj:
             bandGap=None,
             hullDistance=None,
             formationEnergy=None,
-            thickness=None,
             symmetry=None
         )
 
@@ -24,6 +22,5 @@ class matDataObj:
         bandGap= {self.bandGap}    
         hullDistance= {self.hullDistance}    
         formationEnergy= {self.formationEnergy}    
-        thickness= {self.thickness}    
         symmetry= {self.symmetry}
     )"""

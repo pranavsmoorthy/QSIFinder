@@ -2,6 +2,9 @@ from qmpy_rester import QMPYRester
 from utils.debug import logDebug, logError
 import subprocess
 
+import functools
+
+@functools.cache
 def retrieveOqmdData(formula):
     try:
         logDebug("Retrieving OQMD data...")

@@ -4,10 +4,12 @@ from dotenv import load_dotenv
 from utils.debug import logDebug, logError
 
 import traceback;
+import functools
 
 load_dotenv()
 mpKey = os.getenv("MP_KEY")
 
+@functools.cache
 def retrieveMpData(formula):
     try:
         with MPRester(mpKey) as mpr:

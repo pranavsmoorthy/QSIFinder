@@ -63,14 +63,14 @@ def getSymmetrySubscore(symmetry, curvature=0.5):
     # are diminishing returns for each increase in symmetry
     return (symmetry / 230) ** curvature
 
-def getBandGapSubscore(bandGap, idealGapVisible=1.0, idealGapUV=2.5, visibleTolerance=0.5, uvTolerance=1.0, uvCutoff=2):
-    # Band gap of 1.0eV is best so that effective quantum 
-    # dots can be made where information can pass 
+def getBandGapSubscore(bandGap, idealGapVisible=2.4, idealGapUV=4.7, visibleTolerance=0.6, uvTolerance=1.5, uvCutoff=3.1):
+    # Band gap of 1.8eV to 3.0eV is best so that effective 
+    # quantum dots can be made where information can pass 
     # through easily
     #
-    # This creates a bell curve centered at 1.0eV and
-    # tolerance of 0.5, meaning that a material within 0.5 to
-    # 1.5 eV band gap will be suitable. (Using default 
+    # This creates a bell curve centered at 2.4eV and
+    # tolerance of 0.6, meaning that a material within 1.8 
+    # to 2.4 eV band gap will be suitable. (Using default 
     # values)
     # 
     # If the material is determined to be a UV emitter

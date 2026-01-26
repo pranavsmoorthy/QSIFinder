@@ -47,8 +47,8 @@ The QSI is calculated by evaluating five main properties of a material. Each pro
         \text{score} = e^{-\frac{(\text{bandGap} - \text{idealGap})^2}{2 \cdot \text{tolerance}^2}}
         ```
     -   **Default Parameters:** 
-        -   For visible range: `idealGap = 1.0`, `tolerance = 0.5`
-        -   For UV range (`bandGap > 2.0eV`): `idealGap = 2.5`, `tolerance = 1.0`
+        -   For visible range: `idealGap = 2.4`, `tolerance = 0.6`
+        -   For UV range (`bandGap > 3.1eV`): `idealGap = 4.7`, `tolerance = 1.6`
 
 2.  **Stability (Hull Distance)**
     -   **Description:** This metric indicates the thermodynamic stability of a material. A lower hull distance is better.

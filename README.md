@@ -1,5 +1,3 @@
-# Exploring Alternative Materials for Computer Processors
-
 ## Table of Contents
 - [The Problem](#the-problem)
 - [The Solution](#the-solution)
@@ -40,8 +38,8 @@ This model will calculate the QSI, which will then be validated against existing
 The QSI is calculated by evaluating five main properties of a material. Each property is assigned a subscore based on a custom formula, which is then used to calculate the final QSI.
 
 1.  **Electronic Performance (Band Gap)**
-    -   **Description:** A larger band gap leads to less current leakage. The model now differentiates between materials based on their potential application in visible or UV light spectrums. For typical applications, an ideal band gap is around 1.0eV. For materials suited as UV emitters (band gap > 2.0eV), an ideal gap of 2.5eV is targeted.
-    -   **Ideal Value:** ~1.0eV (Visible) or ~2.5eV (UV)
+    -   **Description:** A larger band gap leads to less current leakage. The model now differentiates between materials based on their potential application in visible or UV light spectrums. For typical applications, an ideal band gap is around 2.4eV. For materials suited as UV emitters (band gap > 3.1eV), an ideal gap of 4.7eV is targeted.
+    -   **Ideal Value:** ~2.4eV (Visible) or ~4.7eV (UV)
     -   **Formula:** A Gaussian function is used to score materials, favoring those with a band gap close to the relevant ideal value.
         ```math
         \text{score} = e^{-\frac{(\text{bandGap} - \text{idealGap})^2}{2 \cdot \text{tolerance}^2}}
@@ -57,7 +55,7 @@ The QSI is calculated by evaluating five main properties of a material. Each pro
         ```math
         \text{score} = e^{-\frac{\text{stability}}{\text{decayConstant}}}
         ```
-    -   **Default Parameters:** `decayConstant = 0.05`
+    -   **Default Parameters:** `decayConstant = 50`
 
 3.  **Formation Energy**
 
